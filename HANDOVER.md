@@ -5,8 +5,77 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 
 ## RVIP progress
 - **Stage 1 (Get + build): done.**
-- **Stage 2 (Explore + stairs + no `--More--`): done.** Next: **stage 3**
-  (Enter menu + inventory).
+- **Stage 2 (Explore + stairs + no `--More--`): done.**
+- **Stage 3 (Enter menu + inventory): done.** Next: **stage 4** (tiles).
+
+### Stage 3 facts
+- Files: `src/cmd.c` (end: `rvip_cmdmenu`, `rvip_cmd_key`, `rvip_extkey`,
+  `rvip_movekey`, `rvip_ext_preset`), `src/invent.c` (getobj probe/preselect
+  hooks; end: `rvip_ddoinv`, `rvip_actmenu`, `rvip_inv_again`, action table
+  `rvip_acts[]`), `src/apply.c` (`rvip_applyclasses` wraps static
+  `setapplyclasses`), `src/hack.c` (`rvip_nhostile` now global),
+  `include/extern.h`, `win/web/winweb.c`, `web/evilhack.js`, `web/index.html`.
+  All game-side code under `#ifdef WEB_GRAPHICS`; tty build unchanged.
+- **Enter menu:** JS Enter = 13 (`^M`), free in vi and number_pad sets and
+  unused by getpos. `web_nh_poskey`: 13 while `iflags.in_parse` (and no
+  pop-up/prompt) → `rvip_cmdmenu()`: every `extcmdlist` entry grouped like
+  `dokeylist()` (General / Game / Wizard-mode if wizard), no
+  `CMD_NOT_AVAILABLE`; key = reverse lookup in `Cmd.commands` (printable
+  first; step/run keys of the current keyset skipped, but `<`/`>` kept),
+  else shown `#name`. Choosing returns the key into parse(); keyless ones
+  return `#` and `web_get_ext_cmd` takes `rvip_ext_preset`. The command's
+  own key picks its row (gch), arrows/8/2 move, Enter/5/6/click choose,
+  Esc/0/4 close. Enter menu → `i` reaches the inventory.
+- **Inventory (`i`, `ddoinv` → `rvip_ddoinv`):** the game's own inventory
+  menu shown in *raw* mode (`web_menu_raw`): winweb only moves the cursor
+  and returns any other key (`web_menu_key`, row id `web_menu_pick`, cursor
+  `web_menu_idx`). Lists: inventory ↔ equipment ↔ floor (4/6/←/→, empty ones
+  skipped). Letter = main action; Shift+letter drop; Ctrl+letter examine;
+  Enter/Space/5/click = action menu; `+` main, `-` drop, `*` examine; Esc/0/.
+  close; other keys run as commands. Examine = encyclopedia (`checkfile`,
+  the old `ddoinv` pick, now `examine_obj`).
+- **How item actions run (key queue + preselect, 5.7):** `rvip_acts[]` =
+  {command function, name, getobj word, the command's own class list}. Fit
+  test: `rvip_probe_obj` makes `getobj()` return right after it builds its
+  candidate list (`rvip_probe_fit` = item listed) — the game's own "ugly
+  checks" decide. Chosen action: `rvip_presel = obj`, key from
+  `rvip_cmd_key(fn)` (current keyset; `#`+preset for keyless) queued with
+  `web_push_key` (C queue, read before page keys); the command's first
+  `getobj()` takes the preselect and goes through its normal verification.
+  Main-action order: zap, read, quaff, wield (not if wielded), apply, eat,
+  remove, take off, put on, wear, else examine. Floor list: main = pick up
+  (`,`). Offer only on an altar. `rvip_inv_again()` (called from
+  `web_nh_poskey` when parse reads with an empty queue) clears the preselect
+  and returns `i` again unless a hostile is in view (`rvip_nhostile`).
+- **Every item prompt with a cursor:** `iflags.force_invmenu = TRUE` (set in
+  `web_init_nhwindows`, upstream 3.6 option): every `getobj()` opens its
+  item list at once (PICK_ONE; letters, `-` hands, `*` list everything).
+  Menus: raw arrow codes (0x101..) reach `select_menu` while a pop-up is up;
+  8/2 move (unless a row uses that key), 5/6/Enter choose, 0/4/./Esc close,
+  PgUp/PgDn/Home/End.
+- **Keypad:** JS sends keypad digits as 0x110+d (by `e.code`); C turns them
+  into digits in menus/prompts and into steps on the map.
+- Fixed a stage-1 bug: any group accelerator (gch, e.g. class symbols in
+  the pick-up menu) suppressed menu letters; now only `web_menu_noletters`
+  (command/action/floor menus) does.
+- Pop-up (stage-1 page): `position: fixed`, `width: max-content`, capped
+  at the viewport and scrolled; cursor row scrolled into view; rows carry
+  `data-row` (click → 0x20000|row). Stage 5 renders the same rows in an
+  rvip-wm popup.
+- Test hooks: `nhShadow.popTitle`, `popRows`, `popCur` (cursor row index).
+- Tests: `scratchpad/s3/s3.cjs` (Healer; 0 fails): menu lists all table
+  commands (non-wizard), `~ < >` present, no movement keys, groups, width =
+  longest row, arrows/letter/Enter/click/Esc; `i` cursor, keypad 8/2/4/6/5/
+  0, item menus for weapon, armor, food, spellbook, potion, wand, tool, gem;
+  letter quaff with no prompt + list reopens; Shift drop; Ctrl examine; menu
+  eat via keypad; `-` drop; floor list `+` pick-up; item prompts q e r z a W
+  P w t d Q E show the cursor list; letter picks at a prompt.
+  `scratchpad/s3/np.cjs`: `EVILHACKOPTIONS=number_pad:1` → menu shows
+  `j` jump, `k` kick, `^L` redraw (keyset keys). Native tty `make` builds.
+- Open: `#name`/`#call`/`#force` not in the item menu (they ask their own
+  menus first); counts in item prompts (digits are keypad keys in the list);
+  reopen check uses hostiles only (peacefuls don't block); not yet checked
+  in the Mac pane.
 
 ### Stage 2 facts
 - Explore key **`~`** (`#autoexplore`, `src/cmd.c` extcmdlist): free in the
