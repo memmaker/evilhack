@@ -1778,6 +1778,9 @@ static struct win_info window_opts[] = {
 #ifdef CURSES_GRAPHICS
     { "curses", "terminal-based graphics" },
 #endif
+#ifdef WEB_GRAPHICS /* RVIP: browser port, win/web/winweb.c */
+    { "web", "browser (WebAssembly)" },
+#endif
 #ifdef X11_GRAPHICS
     { "X11", "X11" },
 #endif

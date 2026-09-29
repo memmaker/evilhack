@@ -42,7 +42,10 @@
  * Define all of those you want supported in your binary.
  * Some combinations make no sense.  See the installation document.
  */
-#if !defined(NOTTYGRAPHICS)
+#ifdef __EMSCRIPTEN__
+#define WEB_GRAPHICS /* RVIP: browser window port, win/web/winweb.c */
+#define DEFAULT_WINDOW_SYS "web"
+#elif !defined(NOTTYGRAPHICS)
 #define TTY_GRAPHICS /* good old tty based graphics */
 #endif
 /* #define CURSES_GRAPHICS *//* Curses interface - Karl Garrison*/
@@ -265,7 +268,8 @@
  *
  */
 
-#if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS)
+#if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS) \
+    && !defined(__EMSCRIPTEN__) /* RVIP: no fork/exec in wasm */
 /* path and file name extension for compression program */
 #define COMPRESS "/usr/bin/compress" /* Lempel-Ziv compression */
 #define COMPRESS_EXTENSION ".Z"      /* compress's extension */

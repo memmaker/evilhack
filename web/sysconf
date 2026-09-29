@@ -1,0 +1,10 @@
+# EvilHack web build (RVIP): system configuration, read from /evilhack.
+# Upstream server version: sys/unix/sysconf.  Web defaults come later.
+WIZARDS=
+EXPLORERS=*
+CHECK_PLNAME=1
+MAXPLAYERS=0
+PERSMAX=50
+ENTRYMAX=2000
+POINTSMIN=1
+MAX_STATUENAME_RANK=50

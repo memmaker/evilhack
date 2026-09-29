@@ -101,6 +101,10 @@
 
 /* #define NO_FILE_LINKS */                       /* if no hard links */
 /* #define LOCKDIR "/usr/games/lib/nethackdir" */ /* where to put locks */
+#ifdef __EMSCRIPTEN__
+#define NO_FILE_LINKS /* RVIP: MEMFS/IDBFS has no link() */
+#define LOCKDIR "/evilhack"
+#endif
 
 /*
  * If you want the static parts of your playground on a read-only file
