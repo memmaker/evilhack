@@ -170,8 +170,12 @@ getlock()
         /* drop the "perm" lock while the user decides */
         unlock_file(HLOCK);
         if (iflags.window_inited) {
+#ifdef __EMSCRIPTEN__
+            c = 'r'; /* RVIP web: the autosave checkpoint; recover silently */
+#else
             /* this is a candidate for paranoid_confirmation */
             c = yn_function("Old game in progress.  Destroy [y], Recover [r], or Cancel [n]?", "ynr", 'n');
+#endif
         } else {
             (void) printf("\nThere is already a game in progress under your name.  Do what?\n");
             (void) printf("\n  y - Destroy old game");
@@ -188,8 +192,12 @@ getlock()
 
         if (c == 'r' || c == 'R') {
             if (restore_savefile(lock, fqn_prefix[SAVEPREFIX]) == 0) {
+#ifdef __EMSCRIPTEN__
+                const char *msg = "Your game was restored from its autosave.";
+#else
                 const char *msg = "Automatic recovery of game successful!  "
                                   "Press any key to continue...\n";
+#endif
                 fflush(stdout);
                 if (iflags.window_inited) {
                     pline("%s", msg);
