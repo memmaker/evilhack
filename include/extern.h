@@ -1016,6 +1016,23 @@ E int FDECL(rvip_start, (CHAR_P));
 E boolean NDECL(rvip_continue);
 E boolean NDECL(rvip_walking);
 E int NDECL(doexplore);
+E int NDECL(rvip_nhostile);
+#ifdef WEB_GRAPHICS
+/* RVIP stage 3: Enter menu, inventory with cursor and item menus */
+E int rvip_ext_preset;
+E int FDECL(rvip_cmd_key, (int NDECL((*))));
+E int NDECL(rvip_cmdmenu);
+E struct obj *rvip_presel, *rvip_probe_obj;
+E boolean rvip_probe_fit;
+E int NDECL(rvip_ddoinv);
+E int NDECL(rvip_inv_again);
+E void FDECL(rvip_applyclasses, (char *));
+/* win/web/winweb.c */
+E boolean web_menu_raw, web_menu_noletters;
+E int web_menu_key, web_menu_idx;
+E anything web_menu_pick;
+E void FDECL(web_push_key, (int));
+#endif
 E boolean NDECL(overexertion);
 E void NDECL(invocation_message);
 E void NDECL(switch_terrain);

@@ -64,6 +64,20 @@ static boolean pop_any;
 static int cells[ROWNO * COLNO], chars[ROWNO * COLNO];
 static char *tbuf;
 static size_t tlen, tcap;
+/* keys the game queued (RVIP item actions): read before the page's keys */
+static int kq[16], kqn;
+/* RVIP raw menus (src/invent.c rvip_ddoinv): select_menu only moves the
+   cursor and returns every other key here with the row under the cursor */
+boolean web_menu_raw, web_menu_noletters;
+int web_menu_key, web_menu_idx;
+anything web_menu_pick;
+
+void
+web_push_key(int k)
+{
+    if (kqn < (int) SIZE(kq))
+        kq[kqn++] = k;
+}
 
 static void web_getlin(const char *, char *);
 static void web_putstr(winid, int, const char *);
@@ -187,6 +201,11 @@ getkey(boolean want_mouse)
 {
     int k;
 
+    if (kqn) {
+        k = kq[0];
+        memmove(kq, kq + 1, --kqn * sizeof *kq);
+        return k;
+    }
     if (perm_dirty && want_mouse && !program_state.restoring) /* names are loaded now */
         web_update_inventory();
     redraw();
@@ -215,6 +234,19 @@ getkey(boolean want_mouse)
             mouse_btn = (k & 0x8000) ? CLICK_2 : CLICK_1;
             return 0;
         }
+        if (k >= 0x110 && k <= 0x119) { /* keypad digit */
+            static const int step[10] = { 0, 0x107, 0x102, 0x108, 0x103,
+                                          0, 0x104, 0x105, 0x101, 0x106 };
+            int d = k - 0x110;
+
+            /* on the map (no pop-up or prompt) it steps like the arrows;
+               in menus and prompts it is the digit */
+            if (popup >= 0 || *promptbuf || !step[d])
+                return '0' + d;
+            k = step[d];
+        }
+        if (popup >= 0 && k > 0x100 && k <= 0x108)
+            return k; /* menus move their cursor with the raw arrows */
         switch (k) {
         case 0x101: return np ? '8' : 'k';
         case 0x102: return np ? '2' : 'j';
@@ -265,6 +297,7 @@ static void
 web_init_nhwindows(int *argc, char **argv)
 {
     iflags.perm_invent = TRUE;
+    iflags.force_invmenu = TRUE; /* RVIP: every item prompt is a cursor list */
     iflags.window_inited = TRUE;
     redraw();
 }
@@ -642,10 +675,14 @@ show_text(winid w)
     popup = w, pop_top = 0, pop_cur = -1, pop_any = FALSE;
     for (;;) {
         k = getkey(FALSE);
-        if ((k == ' ' || k == '>' || k == 'j' || k == '2') && pop_top + rows < n)
-            pop_top += (k == ' ' || k == '>') ? rows : 1;
-        else if ((k == '<' || k == 'k' || k == '8') && pop_top > 0)
-            pop_top -= (k == '<') ? min(rows, pop_top) : 1;
+        if ((k == ' ' || k == '>' || k == 'j' || k == '2' || k == 0x102
+             || k == 0x108) && pop_top + rows < n)
+            pop_top += (k == ' ' || k == '>' || k == 0x108) ? rows : 1;
+        else if ((k == '<' || k == 'k' || k == '8' || k == 0x101
+                  || k == 0x106) && pop_top > 0)
+            pop_top -= (k == '<' || k == 0x106) ? min(rows, pop_top) : 1;
+        else if (k > 0x100) /* other arrows keep the text up */
+            continue;
         else
             break;
     }
@@ -772,14 +809,27 @@ web_end_menu(winid w, const char *prompt)
 
     free(p->prompt);
     p->prompt = prompt ? xstrdup(prompt) : 0;
-    for (i = 0; i < p->nitems; i++)
-        if (p->items[i].gch) /* keyed by gch: no letters */
-            next = 0;
+    if (web_menu_noletters) /* RVIP menus keyed by command keys (gch) */
+        next = 0;
+    web_menu_noletters = FALSE;
     for (i = 0; i < p->nitems && next; i++)
         if (p->items[i].id.a_void && !p->items[i].ch) {
             p->items[i].ch = next;
             next = next == 'z' ? 'A' : next == 'Z' ? 0 : next + 1;
         }
+}
+
+/* is k an accelerator of a selectable row? */
+static boolean
+menu_key(struct nhw *p, int k)
+{
+    int i;
+
+    for (i = 0; i < p->nitems; i++)
+        if (p->items[i].id.a_void
+            && (p->items[i].ch == k || (k && (uchar) p->items[i].gch == k)))
+            return TRUE;
+    return FALSE;
 }
 
 static int
@@ -808,6 +858,12 @@ web_select_menu(winid w, int how, menu_item **sel)
             pop_cur = i;
             break;
         }
+    if (web_menu_raw && web_menu_idx > 0) /* cursor where it was */
+        for (i = min(web_menu_idx, p->nitems - 1); i >= 0; i--)
+            if (p->items[i].id.a_void) {
+                pop_cur = i;
+                break;
+            }
     for (;;) {
         if (pop_cur >= 0) {
             if (pop_cur < pop_top)
@@ -816,13 +872,36 @@ web_select_menu(winid w, int how, menu_item **sel)
                 pop_top = pop_cur - rows + 1;
         }
         k = getkey(FALSE);
-        for (i = 0; i < p->nitems && p->items[i].ch != k; i++)
+        /* cursor: arrows, keypad 8/2, PgUp/PgDn (Home/End) */
+        if (k == 0x101 || k == 0x102 || k == 0x106 || k == 0x108
+            || k == 0x105 || k == 0x107
+            || ((k == '8' || k == '2') && !menu_key(p, k))) {
+            int d = (k == 0x102 || k == '2' || k == 0x108 || k == 0x107) ? 1 : -1,
+                steps = (k == 0x106 || k == 0x108) ? rows
+                        : (k == 0x105 || k == 0x107) ? p->nitems : 1;
+
+            if (how == PICK_NONE && pop_cur < 0) { /* plain list: scroll */
+                pop_top = max(0, min(pop_top + d * steps, p->nitems - rows));
+                continue;
+            }
+            for (i = pop_cur + d; steps && i >= 0 && i < p->nitems; i += d)
+                if (p->items[i].id.a_void)
+                    pop_cur = i, steps--;
+            continue;
+        }
+        if (web_menu_raw) { /* the game handles every other key */
+            web_menu_key = k;
+            web_menu_idx = pop_cur;
+            web_menu_pick = pop_cur >= 0 ? p->items[pop_cur].id : zeroany;
+            popup = -1;
+            return 0;
+        }
+        if (menu_key(p, k)) /* a real accelerator wins over keypad keys */
             ;
-        if (i < p->nitems) /* a real accelerator wins over numpad keys */
-            ;
-        else if (k == '\r' || k == '5')
+        else if (k == '\r' || k == '5' || (k == 0x104 || k == '6'))
             k = '\n';
-        else if (k == '0' || (k == '.' && how != PICK_ANY))
+        else if (k == '0' || (k == '.' && how != PICK_ANY)
+                 || k == 0x103 || k == '4')
             k = '\033';
         if (k == '\033') {
             popup = -1;
@@ -845,21 +924,12 @@ web_select_menu(winid w, int how, menu_item **sel)
             }
             break;
         }
-        if (k == 'j' || k == '2' || k == 'k' || k == '8') {
-            int d = (k == 'j' || k == '2') ? 1 : -1;
-
-            for (i = pop_cur + d; i >= 0 && i < p->nitems; i += d)
-                if (p->items[i].id.a_void) {
-                    pop_cur = i;
-                    break;
-                }
-            continue;
-        }
         if (k == ' ' && pop_cur >= 0) {
             p->items[pop_cur].sel = !p->items[pop_cur].sel;
             continue;
         }
-        if (how == PICK_ANY && (k == ',' || k == '@' || k == '-')) {
+        if (how == PICK_ANY && (k == ',' || k == '@' || k == '-')
+            && !menu_key(p, k)) {
             for (i = 0; i < p->nitems; i++)
                 if (p->items[i].id.a_void)
                     p->items[i].sel = (k != '-');
@@ -867,7 +937,7 @@ web_select_menu(winid w, int how, menu_item **sel)
         }
         for (i = 0; i < p->nitems; i++)
             if (p->items[i].id.a_void
-                && (p->items[i].ch == k || p->items[i].gch == k)) {
+                && (p->items[i].ch == k || (uchar) p->items[i].gch == k)) {
                 if (how == PICK_ONE) {
                     int j;
 
@@ -961,7 +1031,16 @@ web_nhgetch(void)
 static int
 web_nh_poskey(int *x, int *y, int *mod)
 {
-    int k = getkey(TRUE);
+    int k;
+
+    /* RVIP: reading a command with nothing queued: an item action picked
+       in the inventory list is over (reopen the list), Enter = commands */
+    if (iflags.in_parse && !kqn && (k = rvip_inv_again()) != 0)
+        return k;
+    k = getkey(TRUE);
+    while (k == '\r' && iflags.in_parse && popup < 0 && !*promptbuf)
+        if (!(k = rvip_cmdmenu()))
+            k = getkey(TRUE);
 
     if (!k)
         *x = mouse_x, *y = mouse_y, *mod = mouse_btn;
@@ -1061,6 +1140,11 @@ web_get_ext_cmd(void)
     char buf[BUFSZ];
     int i, n, hit = -1;
 
+    if (rvip_ext_preset >= 0) { /* picked in the Enter menu / item menu */
+        i = rvip_ext_preset;
+        rvip_ext_preset = -1;
+        return i;
+    }
     web_getlin("#", buf);
     (void) mungspaces(buf);
     if (*buf == '\033')

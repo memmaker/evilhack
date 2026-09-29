@@ -63,14 +63,17 @@
 				$('inv').innerHTML = r.map(function (l) { return '<span style="color:' + PAL[l.c] + '">' + esc(l.s) + '</span>'; }).join('\n');
 			} else if (id === 3) {
 				var p = $('pop');
-				if (!t) { shadow.pop = ''; p.hidden = true; return; }
-				var nl = t.indexOf('\n'), head = t.slice(0, nl).split('\t'), cur = +head[1], title = head.slice(2).join('\t');
+				if (!t) { shadow.pop = ''; shadow.popTitle = ''; shadow.popRows = []; shadow.popCur = -1; p.hidden = true; return; }
+				var nl = t.indexOf('\n'), head = t.slice(0, nl).split('\t'), top = +head[0], cur = +head[1], title = head.slice(2).join('\t');
 				var rr = rowsText(t.slice(nl + 1));
 				shadow.pop = (title ? title + '\n' : '') + rr.map(function (l) { return l.s; }).join('\n');
+				shadow.popTitle = title; shadow.popRows = rr.map(function (l) { return l.s; }); shadow.popCur = cur;
 				p.innerHTML = (title ? '<div class="pr">' + esc(title) + '</div>' : '') + rr.map(function (l, i) {
-					return '<div' + (i === cur ? ' class="cur"' : '') + ' style="color:' + PAL[l.c] + '">' + esc(l.s || ' ') + '</div>';
+					return '<div data-row="' + i + '"' + (i === cur ? ' class="cur"' : '') + ' style="color:' + PAL[l.c] + '">' + esc(l.s || ' ') + '</div>';
 				}).join('');
 				p.hidden = false;
+				var at = p.querySelector(cur >= 0 ? '.cur' : '[data-row="' + top + '"]');
+				if (at && at.scrollIntoView) at.scrollIntoView({ block: 'nearest' });
 			}
 		},
 		key: function (peek, atCmd) {
@@ -89,8 +92,10 @@
 
 	function onKey(e) {
 		if (!running || e.isComposing || e.metaKey) return;
-		var k = e.key, c;
-		if (KEYS[k] !== undefined) c = KEYS[k];
+		var k = e.key, c, np = /^Numpad(\d)$/.exec(e.code || '');
+		if (np) c = 0x110 + +np[1];       /* keypad digits: C decides (cursor, digit or step) */
+		else if (e.code === 'NumpadDecimal') c = 46;
+		else if (KEYS[k] !== undefined) c = KEYS[k];
 		else if (k.length === 1) {
 			c = k.charCodeAt(0);
 			if (e.ctrlKey && !e.altKey) { var u = k.toUpperCase().charCodeAt(0); if (u >= 65 && u <= 90) c = u & 0x1f; else return; }
@@ -100,6 +105,11 @@
 		events.push(c);
 		e.preventDefault();
 	}
+	/* a click on a pop-up row: 0x20000 | row (C moves the cursor there and picks) */
+	document.addEventListener('click', function (e) {
+		var d = e.target.closest && e.target.closest('#pop [data-row]');
+		if (d && running) events.push(0x20000 | +d.getAttribute('data-row'));
+	});
 
 	var syncing = false, again = false, cbs = [];
 	function syncFiles(cb) {

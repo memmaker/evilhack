@@ -4232,7 +4232,7 @@ rvip_hostile()
     return best;
 }
 
-STATIC_OVL int
+int
 rvip_nhostile()
 {
     struct monst *mtmp;

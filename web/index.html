@@ -16,7 +16,7 @@
 	#t-inv { grid-column: 2; grid-row: 1 / 4; }
 	.old { color: var(--dim); } .pr { color: #ffff50; }
 	.hero { outline: 1px solid #fff; }
-	#pop { position: absolute; left: 8px; top: 8px; background: #000; border: 1px solid var(--dim); max-height: calc(100% - 16px); overflow: auto; z-index: 2; }
+	#pop { position: fixed; left: 8px; top: 8px; width: max-content; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); box-sizing: border-box; background: #000; border: 1px solid var(--dim); padding: 0 1ch; overflow: auto; z-index: 2; cursor: default; }
 	#pop .cur { background: #32326e; }
 	[hidden] { display: none !important; }
 </style>

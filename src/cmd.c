@@ -7409,4 +7409,124 @@ dosh_core(VOID_ARGS)
     return 0;
 }
 
+#ifdef WEB_GRAPHICS
+/* RVIP: Enter opens a menu of every command, grouped as dokeylist()
+   groups them (general, game, wizard-mode); the key shown is the one of
+   the current keyset (reverse lookup in Cmd.commands).  Commands without
+   a key run as '#' + name: web_get_ext_cmd() takes rvip_ext_preset. */
+int rvip_ext_preset = -1;
+
+/* is key k a step/run key of the current keyset? */
+STATIC_OVL boolean
+rvip_movekey(k)
+int k;
+{
+    int i;
+    char m[8];
+
+    m[0] = Cmd.move_W, m[1] = Cmd.move_NW, m[2] = Cmd.move_N;
+    m[3] = Cmd.move_NE, m[4] = Cmd.move_E, m[5] = Cmd.move_SE;
+    m[6] = Cmd.move_S, m[7] = Cmd.move_SW; /* not '<' '>' of dirchars */
+    for (i = 0; i < 8; i++)
+        if (k == m[i]
+            || (!Cmd.num_pad && (k == highc(m[i]) || k == C(m[i]))))
+            return TRUE;
+    if (Cmd.num_pad && (k & 0x80) && digit(k & 0x7f))
+        return TRUE;
+    return FALSE;
+}
+
+/* the key that runs ext now (printable first), 0 if none */
+STATIC_OVL int
+rvip_extkey(ext)
+const struct ext_func_tab *ext;
+{
+    int pass, k;
+
+    for (pass = 0; pass < 2; pass++)
+        for (k = 1; k < 256; k++) {
+            if ((pass == 0) != (k >= ' ' && k < 127))
+                continue;
+            if (Cmd.commands[k] != ext || k == '\r' || rvip_movekey(k)
+                || (k == ' ' && !flags.rest_on_space))
+                continue;
+            return k;
+        }
+    return 0;
+}
+
+/* key that runs command fn: its key, or '#' with rvip_ext_preset set */
+int
+rvip_cmd_key(fn)
+int NDECL((*fn));
+{
+    int i, k;
+
+    for (i = 0; extcmdlist[i].ef_txt; i++)
+        if (extcmdlist[i].ef_funct == fn) {
+            if ((k = rvip_extkey(&extcmdlist[i])) != 0)
+                return k;
+            rvip_ext_preset = i;
+            return '#';
+        }
+    return 0;
+}
+
+int
+rvip_cmdmenu()
+{
+    static const struct {
+        int flags, exflags;
+        const char *title;
+    } grp[] = {
+        { GENERALCMD, WIZMODECMD, "General commands" },
+        { 0, GENERALCMD | WIZMODECMD, "Game commands" },
+        { WIZMODECMD, 0, "Wizard-mode commands" },
+    };
+    winid win;
+    anything any;
+    menu_item *sel = 0;
+    char buf[BUFSZ], kb[QBUFSZ];
+    int g, i, k, n, ret = 0;
+    const struct ext_func_tab *ext;
+
+    win = create_nhwindow(NHW_MENU);
+    start_menu(win);
+    for (g = 0; g < SIZE(grp); g++) {
+        if (grp[g].flags == WIZMODECMD && !wizard)
+            continue;
+        any = zeroany;
+        add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+                 grp[g].title, MENU_UNSELECTED);
+        for (i = 0; (ext = &extcmdlist[i])->ef_txt; i++) {
+            if ((grp[g].flags && !(ext->flags & grp[g].flags))
+                || (ext->flags & grp[g].exflags)
+                || (ext->flags & CMD_NOT_AVAILABLE))
+                continue;
+            if ((k = rvip_extkey(ext)) != 0)
+                Sprintf(buf, "%-7s %s", key2txt((uchar) k, kb), ext->ef_desc);
+            else
+                Sprintf(buf, "#%-6s %s", ext->ef_txt, ext->ef_desc);
+            any.a_int = i + 1;
+            /* the command's own key picks it in the menu (gch: no letters) */
+            add_menu(win, NO_GLYPH, &any, 0, (char) k, ATR_NONE,
+                     buf, MENU_UNSELECTED);
+        }
+    }
+    web_menu_noletters = TRUE;
+    end_menu(win, "Commands");
+    n = select_menu(win, PICK_ONE, &sel);
+    destroy_nhwindow(win);
+    if (n > 0) {
+        i = sel[0].item.a_int - 1;
+        free((genericptr_t) sel);
+        if (!(ret = rvip_extkey(&extcmdlist[i]))) {
+            rvip_ext_preset = i;
+            ret = '#';
+        }
+    }
+    return ret;
+}
+#endif /* WEB_GRAPHICS */
+
 /*cmd.c*/

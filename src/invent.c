@@ -1819,6 +1819,12 @@ const char *let, *word;
         compactify(bp);
     *ap = '\0';
 
+#ifdef WEB_GRAPHICS
+    if (rvip_probe_obj) { /* RVIP item menu: would this prompt list it? */
+        rvip_probe_fit = index(lets, rvip_probe_obj->invlet) != 0;
+        return (struct obj *) 0;
+    }
+#endif
     if (!foo && !allowall && !allownone) {
         You("don't have anything %sto %s.", foox ? "else " : "", word);
         return (struct obj *) 0;
@@ -1836,6 +1842,19 @@ const char *let, *word;
         cnt = 0;
         cntgiven = FALSE;
         Sprintf(qbuf, "What do you want to %s?", word);
+#ifdef WEB_GRAPHICS
+        /* RVIP: an action picked in the inventory list answers the
+           command's first item prompt; the usual checks follow */
+        if (rvip_presel) {
+            for (otmp = invent; otmp && otmp != rvip_presel; otmp = otmp->nobj)
+                ;
+            rvip_presel = 0;
+            if (otmp) {
+                ilet = otmp->invlet;
+                goto rvip_picked;
+            }
+        }
+#endif
         if (in_doagain)
             ilet = readchar();
         else if (iflags.force_invmenu) {
@@ -1853,6 +1872,9 @@ const char *let, *word;
                 Sprintf(eos(qbuf), " [%s or ?*]", buf);
             ilet = yn_function(qbuf, (char *) 0, '\0');
         }
+#ifdef WEB_GRAPHICS
+ rvip_picked:
+#endif
         if (digit(ilet)) {
             long tmpcnt = 0;
 
@@ -2712,30 +2734,41 @@ long quan;       /* if non-0, print this quantity, not obj->quan */
     return li;
 }
 
+/* encyclopedia entry of an object (the 'i' command's pick) */
+STATIC_OVL void
+examine_obj(invobj)
+struct obj *invobj;
+{
+    char out_str[BUFSZ];
+
+    if (invobj->oartifact)
+        strcpy(out_str, artiname((int) invobj->oartifact));
+    else
+        strcpy(out_str, simple_typename(invobj->otyp));
+    checkfile(out_str, NULL, TRUE, TRUE, NULL);
+}
+
 /* the 'i' command */
 int
 ddoinv()
 {
-    char invlet = display_inventory((char *) 0, TRUE);
+    char invlet;
     struct obj* invobj;
-    char out_str[BUFSZ];
 
+#ifdef WEB_GRAPHICS
+    return rvip_ddoinv();
+#endif
+    invlet = display_inventory((char *) 0, TRUE);
     if (!invlet || invlet == '\033' || invlet == ' ' || invlet == '\n')
         return 0;
 
-    for (invobj = invent; invobj != NULL; invobj = invobj->nobj) {
-        if (invobj->invlet == invlet) {
-            if (invobj->oartifact)
-                strcpy(out_str, artiname((int) invobj->oartifact));
-            else
-                strcpy(out_str, simple_typename(invobj->otyp));
+    for (invobj = invent; invobj != NULL; invobj = invobj->nobj)
+        if (invobj->invlet == invlet)
             break;
-        }
-    }
     if (invobj == NULL)
         return 0;
 
-    checkfile(out_str, NULL, TRUE, TRUE, NULL);
+    examine_obj(invobj);
     return 0;
 }
 
@@ -4790,5 +4823,344 @@ boolean as_if_seen;
     }
     return n;
 }
+
+#ifdef WEB_GRAPHICS
+/*
+ * RVIP inventory with a cursor and item menus (web window port).
+ * The list is the game's own inventory menu (display_inventory), shown by
+ * winweb.c in "raw" mode: it moves the cursor and hands every other key
+ * back (web_menu_key, web_menu_idx, web_menu_pick).  Actions run as key
+ * queue + preselect: the command's key is queued (web_push_key) and
+ * rvip_presel answers its first getobj(), so every command keeps its own
+ * checks and prompts.  Which actions fit an item is asked from getobj()
+ * itself (rvip_probe_obj: would this prompt list the item?) with the
+ * commands' own class lists.
+ */
+struct obj *rvip_presel = 0, *rvip_probe_obj = 0;
+boolean rvip_probe_fit = FALSE;
+static boolean rvip_reopen = FALSE;
+
+static const char rv_food[] = { FOOD_CLASS, 0 },
+    rv_offer[] = { FOOD_CLASS, AMULET_CLASS, 0 },
+    rv_potion[] = { POTION_CLASS, 0 },
+    rv_read[] = { ALL_CLASSES, SCROLL_CLASS, SPBOOK_CLASS, 0 },
+    rv_clothes[] = { ARMOR_CLASS, RING_CLASS, AMULET_CLASS, TOOL_CLASS,
+                     FOOD_CLASS, 0 },
+    rv_access[] = { RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS,
+                    ARMOR_CLASS, 0 },
+    rv_wield[] = { ALL_CLASSES, ALLOW_NONE, WEAPON_CLASS, TOOL_CLASS, 0 },
+    rv_ready[] = { ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, ALLOW_NONE,
+                   WEAPON_CLASS, 0 },
+    rv_toss[] = { ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, WEAPON_CLASS, 0 },
+    rv_bullets[] = { ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, GEM_CLASS, 0 },
+    rv_zap[] = { WAND_CLASS, 0 }, rv_all[] = { ALL_CLASSES, 0 },
+    rv_rub[] = { TOOL_CLASS, GEM_CLASS, 0 },
+    rv_tip[] = { ALL_CLASSES, TOOL_CLASS, 0 },
+    rv_stylus[] = { ALL_CLASSES, ALLOW_NONE, TOOL_CLASS, WEAPON_CLASS,
+                    WAND_CLASS, GEM_CLASS, RING_CLASS, 0 },
+    rv_drop[] = { ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, 0 };
+
+/* the commands an item can go to: its function, menu name, the getobj()
+   word and class list the command itself uses (apply: setapplyclasses) */
+static const struct rvip_act {
+    int NDECL((*fn));
+    const char *name, *word, *let;
+} rvip_acts[] = {
+    { doapply, "apply", "use or apply", 0 },
+    { doeat, "eat", "eat", rv_food },
+    { dodrink, "quaff", "drink", rv_potion },
+    { doread, "read", "read", rv_read },
+    { dozap, "zap", "zap", rv_zap },
+    { dowear, "wear", "wear", rv_clothes },
+    { dotakeoff, "take off", "take off", rv_clothes },
+    { doputon, "put on", "put on", rv_access },
+    { doremring, "remove", "remove", rv_access },
+    { dowield, "wield", "wield", rv_wield },
+    { dowieldquiver, "ready (quiver)", "ready", rv_ready },
+    { dothrow, "throw", "throw", rv_toss },
+    { dodip, "dip", "dip", rv_all },
+    { dorub, "rub", "rub", rv_rub },
+    { doinvoke, "invoke", "invoke", rv_all },
+    { dotip, "tip", "tip", rv_tip },
+    { doengrave, "engrave with", "write with", rv_stylus },
+    { dosacrifice, "offer", "sacrifice", rv_offer },
+    { doorganize, "adjust letter", "adjust", rv_all },
+    { dodrop, "drop", "drop", rv_drop },
+};
+#define RA_EXAMINE 100
+#define RA_PICKUP 101
+
+/* main action order: devices before eating */
+static int NDECL((*rvip_main_order[])) = {
+    dozap, doread, dodrink, dowield, doapply, doeat, doremring, dotakeoff,
+    doputon, dowear, 0
+};
+
+STATIC_OVL boolean
+rvip_fits(a, obj)
+const struct rvip_act *a;
+struct obj *obj;
+{
+    char cl[MAXOCLASSES + 2];
+    const char *let = a->let;
+
+    if (!obj || obj->where != OBJ_INVENT)
+        return FALSE;
+    if (a->fn == doapply) {
+        rvip_applyclasses(cl);
+        let = cl;
+    } else if (a->fn == dothrow && uslinging())
+        let = rv_bullets;
+    else if (a->fn == dosacrifice && !IS_ALTAR(levl[u.ux][u.uy].typ))
+        return FALSE;
+    else if (a->fn == dowield && obj == uwep)
+        return FALSE;
+    rvip_probe_obj = obj, rvip_probe_fit = FALSE;
+    (void) getobj(let, a->word);
+    rvip_probe_obj = 0;
+    return rvip_probe_fit;
+}
+
+STATIC_OVL int
+rvip_actidx(fn)
+int NDECL((*fn));
+{
+    int i;
+
+    for (i = 0; i < SIZE(rvip_acts); i++)
+        if (rvip_acts[i].fn == fn)
+            return i;
+    return -1;
+}
+
+/* the item's main action: an index into rvip_acts, else RA_EXAMINE */
+STATIC_OVL int
+rvip_mainact(obj)
+struct obj *obj;
+{
+    int i, a;
+
+    if (obj && obj->where != OBJ_INVENT)
+        return RA_PICKUP;
+    for (i = 0; rvip_main_order[i]; i++)
+        if ((a = rvip_actidx(rvip_main_order[i])) >= 0
+            && rvip_fits(&rvip_acts[a], obj))
+            return a;
+    return RA_EXAMINE;
+}
+
+/* run action a on obj: 1 = a command was queued (close the list) */
+STATIC_OVL int
+rvip_doact(a, obj)
+int a;
+struct obj *obj;
+{
+    int k;
+
+    if (!obj)
+        return 0;
+    if (a == RA_EXAMINE) {
+        examine_obj(obj);
+        return 0;
+    }
+    k = rvip_cmd_key(a == RA_PICKUP ? dopickup : rvip_acts[a].fn);
+    if (!k)
+        return 0;
+    if (a != RA_PICKUP)
+        rvip_presel = obj;
+    web_push_key(k);
+    rvip_reopen = TRUE;
+    return 1;
+}
+
+/* menu of every action that fits obj, each with its usual key */
+STATIC_OVL int
+rvip_actmenu(obj)
+struct obj *obj;
+{
+    winid win;
+    anything any;
+    menu_item *sel = 0;
+    char buf[BUFSZ], kb[QBUFSZ];
+    int i, k, n, a = -1, save_preset = rvip_ext_preset;
+
+    if (!obj)
+        return 0;
+    win = create_nhwindow(NHW_MENU);
+    start_menu(win);
+    for (i = 0; i < SIZE(rvip_acts) + 2; i++) {
+        int act = i < SIZE(rvip_acts) ? i
+                  : i == SIZE(rvip_acts) ? RA_PICKUP : RA_EXAMINE;
+
+        if (act == RA_PICKUP ? obj->where == OBJ_INVENT
+            : act != RA_EXAMINE && !rvip_fits(&rvip_acts[act], obj))
+            continue;
+        k = act == RA_EXAMINE ? '*'
+            : rvip_cmd_key(act == RA_PICKUP ? dopickup : rvip_acts[act].fn);
+        Sprintf(buf, "%-6s %s", k == '#' ? "#" : key2txt((uchar) k, kb),
+                act == RA_EXAMINE ? "examine"
+                : act == RA_PICKUP ? "pick up" : rvip_acts[act].name);
+        any = zeroany;
+        any.a_int = act + 1;
+        add_menu(win, NO_GLYPH, &any, 0, (k == '#') ? 0 : (char) k, ATR_NONE,
+                 buf, MENU_UNSELECTED);
+    }
+    rvip_ext_preset = save_preset;
+    web_menu_noletters = TRUE;
+    end_menu(win, doname(obj));
+    n = select_menu(win, PICK_ONE, &sel);
+    destroy_nhwindow(win);
+    if (n > 0) {
+        a = sel[0].item.a_int - 1;
+        free((genericptr_t) sel);
+        return rvip_doact(a, obj);
+    }
+    return 0;
+}
+
+STATIC_OVL struct obj *
+rvip_letobj(c)
+int c;
+{
+    struct obj *o;
+
+    for (o = invent; o; o = o->nobj)
+        if (o->invlet == c)
+            return o;
+    return 0;
+}
+
+/* list 1 (equipment) or 2 (floor): a menu keyed by object pointers */
+STATIC_OVL int
+rvip_sublist(mode)
+int mode;
+{
+    winid win;
+    anything any;
+    menu_item *sel = 0;
+    struct obj *o;
+    int n = 0;
+
+    win = create_nhwindow(NHW_MENU);
+    start_menu(win);
+    for (o = (mode == 1) ? invent : level.objects[u.ux][u.uy]; o;
+         o = (mode == 1) ? o->nobj : o->nexthere) {
+        if (mode == 1 && !(o->owornmask & (W_ARMOR | W_ACCESSORY | W_WEAPONS)))
+            continue;
+        any = zeroany;
+        any.a_obj = o;
+        add_menu(win, obj_to_glyph(o, rn2_on_display_rng), &any,
+                 mode == 1 ? o->invlet : 0, 0, ATR_NONE, doname(o),
+                 MENU_UNSELECTED);
+        n++;
+    }
+    if (n) {
+        web_menu_noletters = TRUE; /* letters stay inventory letters */
+        end_menu(win, mode == 1 ? "Equipment" : "Things that are here");
+        (void) select_menu(win, PICK_ONE, &sel);
+    }
+    destroy_nhwindow(win);
+    return n;
+}
+
+STATIC_OVL boolean
+rvip_haslist(mode)
+int mode;
+{
+    struct obj *o;
+
+    if (mode == 0)
+        return TRUE;
+    if (mode == 2)
+        return OBJ_AT(u.ux, u.uy) && can_reach_floor(FALSE);
+    for (o = invent; o; o = o->nobj)
+        if (o->owornmask & (W_ARMOR | W_ACCESSORY | W_WEAPONS))
+            return TRUE;
+    return FALSE;
+}
+
+/* the 'i' command: inventory / equipment / floor list with a cursor */
+int
+rvip_ddoinv()
+{
+    static int cur[3];
+    int mode = 0, k, i;
+    struct obj *obj;
+
+    rvip_reopen = FALSE;
+    for (;;) {
+        web_menu_raw = TRUE;
+        web_menu_idx = cur[mode];
+        web_menu_key = '\033';
+        web_menu_pick = zeroany;
+        if (mode == 0)
+            (void) display_inventory((char *) 0, TRUE);
+        else
+            (void) rvip_sublist(mode);
+        web_menu_raw = FALSE;
+        cur[mode] = web_menu_idx;
+        k = web_menu_key;
+        if (mode == 0) {
+            char c = web_menu_pick.a_char;
+
+            obj = c ? rvip_letobj(c) : 0;
+        } else
+            obj = web_menu_pick.a_obj;
+
+        if (k == '\033' || k == '0' || k == '.')
+            return 0;
+        if (k == 0x103 || k == '4' || k == 0x104 || k == '6') {
+            int d = (k == 0x104 || k == '6') ? 1 : 2;
+
+            for (i = 0; i < 3; i++)
+                if (rvip_haslist(mode = (mode + d) % 3))
+                    break;
+            continue;
+        }
+        if (k == '\n' || k == '\r' || k == '5' || k == ' ') {
+            if (rvip_actmenu(obj))
+                return 0;
+        } else if (k == '+') {
+            if (obj && rvip_doact(rvip_mainact(obj), obj))
+                return 0;
+        } else if (k == '-') {
+            if (obj && obj->where == OBJ_INVENT
+                && rvip_doact(rvip_actidx(dodrop), obj))
+                return 0;
+        } else if (k == '*') {
+            if (obj)
+                examine_obj(obj);
+        } else if (k > 0 && k < 32) { /* Ctrl+letter: examine */
+            if ((obj = rvip_letobj(k + 96)) != 0)
+                examine_obj(obj);
+        } else if (k >= 'A' && k <= 'Z' && rvip_letobj(lowc(k))) {
+            if (rvip_doact(rvip_actidx(dodrop), rvip_letobj(lowc(k))))
+                return 0; /* Shift+letter: drop */
+        } else if (k < 256 && (obj = rvip_letobj(k)) != 0) {
+            if (rvip_doact(rvip_mainact(obj), obj))
+                return 0;
+        } else {
+            if (k > 0 && k < 256) /* any other key is a normal command */
+                web_push_key(k);
+            return 0;
+        }
+    }
+}
+
+/* called by the window port whenever the game reads a command key with
+   nothing queued: the last queued action is over, so drop its preselect
+   and give 'i' again unless a hostile is in view */
+int
+rvip_inv_again()
+{
+    rvip_presel = 0;
+    if (!rvip_reopen)
+        return 0;
+    rvip_reopen = FALSE;
+    if (rvip_nhostile() || u.uhp < 1 || multi)
+        return 0;
+    return rvip_cmd_key(ddoinv);
+}
+#endif /* WEB_GRAPHICS */
 
 /*invent.c*/

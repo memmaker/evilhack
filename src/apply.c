@@ -4686,6 +4686,16 @@ char class_list[];
         add_class(class_list, FOOD_CLASS);
 }
 
+#ifdef WEB_GRAPHICS
+/* RVIP item menu: the class list doapply() gives getobj() */
+void
+rvip_applyclasses(class_list)
+char *class_list;
+{
+    setapplyclasses(class_list);
+}
+#endif
+
 /* the 'a' command */
 int
 doapply()
