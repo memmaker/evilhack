@@ -72,6 +72,7 @@ struct obj *obj;
         return 1;
     }
     consume_obj_charge(obj, TRUE);
+    WEB_SOUND("camera"); /* RVIP sound */
 
     if (obj->cursed && !rn2(2)) {
         (void) zapyourself(obj, TRUE);
@@ -533,6 +534,8 @@ struct obj *obj;
     } else if (Underwater) {
         You("blow bubbles through %s.", yname(obj));
     } else {
+        if (!Deaf)
+            WEB_SOUND(obj->cursed ? "whistle_tin_cursed" : "whistle_tin"); /* RVIP sound */
         if (Deaf)
             You_feel("rushing air tickle your %s.", body_part(NOSE));
         else
@@ -565,6 +568,7 @@ struct obj *obj;
     } else if (!u_handsy()) {
         ;
     } else if (obj->cursed && !rn2(2)) {
+        WEB_SOUND("whistle_magic_cursed"); /* RVIP sound */
         You("produce a %shigh-%s.", Underwater ? "very " : "",
             Deaf ? "frequency vibration" : "pitched humming noise");
         wake_nearby();
@@ -572,6 +576,7 @@ struct obj *obj;
         int omx, omy;
 
         /* it's magic!  it works underwater too (at a higher pitch) */
+        WEB_SOUND("whistle_magic"); /* RVIP sound */
         You(Deaf ? alt_whistle_str : whistle_str,
             Hallucination ? "normal"
             : (Underwater && !Deaf) ? "strange, high-pitched"
@@ -1177,6 +1182,7 @@ struct obj **optr;
     if (!u_handsy())
         return;
 
+    WEB_SOUND("bell"); /* RVIP sound */
     You("ring %s.", the(xname(obj)));
 
     if (Underwater || (u.uswallow && ordinary)) {
@@ -1465,10 +1471,12 @@ struct obj *otmp;
         boolean many = candle ? (otmp->quan > 1L) : (otmp->spe > 1);
 
         (void) get_obj_location(otmp, &x, &y, 0);
-        if (otmp->where == OBJ_MINVENT ? cansee(x, y) : !Blind)
+        if (otmp->where == OBJ_MINVENT ? cansee(x, y) : !Blind) {
+            WEB_SOUND("candle_snuff"); /* RVIP sound */
             pline("%s%scandle%s flame%s extinguished.", Shk_Your(buf, otmp),
                   (candle ? "" : "candelabrum's "), (many ? "s'" : "'s"),
                   (many ? "s are" : " is"));
+        }
         end_burn(otmp, TRUE);
         return TRUE;
     }
@@ -1556,6 +1564,7 @@ struct obj *obj;
                          : NULL; /* NULL => candle(s) */
 
     if (obj->lamplit) {
+        WEB_SOUND(lamp ? "lamp_switch" : "candle_snuff"); /* RVIP sound */
         if (lamp) /* lamp or lantern */
             pline("%s%s is now off.", Shk_Your(buf, obj), lamp);
         else
@@ -1584,6 +1593,7 @@ struct obj *obj;
             pline("%s for a moment, then %s.", Tobjnam(obj, "flicker"),
                   otense(obj, "die"));
     } else {
+        WEB_SOUND(lamp ? "lamp_switch" : "candle_light"); /* RVIP sound */
         if (lamp) { /* lamp or lantern */
             check_unpaid(obj);
             pline("%s%s is now on.", Shk_Your(buf, obj), lamp);
@@ -2788,9 +2798,11 @@ struct obj **optr;
     }
 
     if (Blind) {
+        WEB_SOUND("touchstone_scritch_scritch"); /* RVIP sound */
         pline(scritch);
         return;
     } else if (Hallucination) {
+        WEB_SOUND("touchstone_scrape"); /* RVIP sound */
         pline("Oh wow, man: Fractals!");
         return;
     }
@@ -2884,6 +2896,7 @@ struct obj **optr;
     Sprintf(stonebuf, "stone%s", plur(tstone->quan));
     if (do_scratch) {
         if (!make_sparks) {
+            WEB_SOUND(streak_color ? "touchstone_scrape" : "touchstone_glass"); /* RVIP sound */
             You("make %s%sscratch marks on the %s.",
                 streak_color ? streak_color : (const char *) "",
                 streak_color ? " " : "", stonebuf);
@@ -2944,10 +2957,13 @@ struct obj **optr;
             }
             return;
         }
-    } else if (streak_color)
+    } else if (streak_color) {
+        WEB_SOUND("touchstone_scrape"); /* RVIP sound */
         You_see("%s streaks on the %s.", streak_color, stonebuf);
-    else
+    } else {
+        WEB_SOUND("touchstone_scritch_scritch"); /* RVIP sound */
         pline(scritch);
+    }
     return;
 }
 
@@ -3507,6 +3523,7 @@ struct obj **objp;
                  * sounds a bit weird, but the object isn't in the fountain,
                  * or else it would be wet. */
                 const char *surf_prep = is_damp_terrain(u.ux, u.uy) ? "in" : "on";
+                WEB_SOUND("whip_trick"); /* RVIP sound */
                 You("wrap your bullwhip around %s %s the %s.",
                     an(singular(otmp, xname)), surf_prep, surface(u.ux, u.uy));
                 if (rnl(6) || pickup_object(otmp, 1L, TRUE) < 1)
@@ -3554,7 +3571,7 @@ struct obj **objp;
                 if (attack(mtmp))
                     return 1;
                 else
-                    pline1(msg_snap);
+                    { WEB_SOUND("snap"); /* RVIP sound */ pline1(msg_snap); }
             }
         }
         if (!wrapped_what) {
@@ -3568,6 +3585,7 @@ struct obj **objp;
 
             cc.x = rx;
             cc.y = ry;
+            WEB_SOUND("whip_trick"); /* RVIP sound */
             You("wrap your bullwhip around %s.", wrapped_what);
             if (proficient && rn2(proficient + 2)) {
                 if (!mtmp || enexto_core_mon(&cc, rx, ry, &youmonst,
@@ -3583,7 +3601,7 @@ struct obj **objp;
             if (mtmp)
                 wakeup(mtmp, TRUE);
         } else
-            pline1(msg_snap);
+            { WEB_SOUND("snap"); /* RVIP sound */ pline1(msg_snap); }
 
     } else if (mtmp) {
         if (!canspotmon(mtmp) && !glyph_is_invisible(levl[rx][ry].glyph)) {
@@ -3604,6 +3622,7 @@ struct obj **objp;
             } else
                 mon_hand = 0; /* lint suppression */
 
+            WEB_SOUND("whip_trick"); /* RVIP sound */
             You("wrap your bullwhip around %s.", yname(otmp));
             if (gotit && mwelded(otmp) && mtmp->data != &mons[PM_INFIDEL]) {
                 pline("%s welded to %s %s%c",
@@ -3681,13 +3700,15 @@ struct obj **objp;
             if (M_AP_TYPE(mtmp) && !Protection_from_shape_changers
                 && !sensemon(mtmp))
                 stumble_onto_mimic(mtmp);
-            else
+            else {
+                WEB_SOUND("whip_trick"); /* RVIP sound */
                 You("flick your bullwhip towards %s.", mon_nam(mtmp));
+            }
             if (proficient) {
                 if (attack(mtmp))
                     return 1;
                 else
-                    pline1(msg_snap);
+                    { WEB_SOUND("snap"); /* RVIP sound */ pline1(msg_snap); }
             }
         }
 
@@ -3697,7 +3718,7 @@ struct obj **objp;
         You("snap your whip through thin air.");
 
     } else {
-        pline1(msg_snap);
+        { WEB_SOUND("snap"); /* RVIP sound */ pline1(msg_snap); }
     }
     return 1;
 }
