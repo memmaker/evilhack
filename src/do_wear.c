@@ -4047,6 +4047,8 @@ struct obj *atmp;
      && (!obj_resists(otmp, 0, 90)))
 
     if (DESTROY_ARM(uarmc)) {
+
+        WEB_SOUND("crumble"); /* RVIP sound */
         otmp->in_use = TRUE;
         if (donning(otmp))
             cancel_don();
@@ -4060,6 +4062,7 @@ struct obj *atmp;
         (void) Cloak_off();
         useup(otmp);
     } else if (DESTROY_ARM(uarm)) {
+        WEB_SOUND("crumble"); /* RVIP sound */
         if (uarm && (uarm == otmp)
             && otmp->otyp == CRYSTAL_PLATE_MAIL) {
             otmp->in_use = FALSE; /* nothing happens */
@@ -4084,6 +4087,7 @@ struct obj *atmp;
             useup(otmp);
         }
     } else if (DESTROY_ARM(uarmu)) {
+        WEB_SOUND("crumble"); /* RVIP sound */
         otmp->in_use = TRUE;
         if (donning(otmp))
             cancel_don();
@@ -4091,6 +4095,7 @@ struct obj *atmp;
         (void) Shirt_off();
         useup(otmp);
     } else if (DESTROY_ARM(uarmh)) {
+        WEB_SOUND("crumble"); /* RVIP sound */
         otmp->in_use = TRUE;
         if (donning(otmp))
             cancel_don();
@@ -4099,6 +4104,7 @@ struct obj *atmp;
         (void) Helmet_off();
         useup(otmp);
     } else if (DESTROY_ARM(uarmg)) {
+        WEB_SOUND("crumble"); /* RVIP sound */
         if (uarmg && (uarmg == otmp)
             && otmp->oartifact == ART_DRAGONBANE) {
             pline("%s %s and cannot be disintegrated.",
@@ -4121,6 +4127,7 @@ struct obj *atmp;
             selftouch("You");
         }
     } else if (DESTROY_ARM(uarmf)) {
+        WEB_SOUND("crumble"); /* RVIP sound */
         otmp->in_use = TRUE;
         if (donning(otmp))
             cancel_don();
@@ -4133,6 +4140,7 @@ struct obj *atmp;
         iflags.in_lava_effects--;
         useup(otmp);
     } else if (DESTROY_ARM(uarms)) {
+        WEB_SOUND("crumble"); /* RVIP sound */
         otmp->in_use = TRUE;
         if (donning(otmp))
             cancel_don();

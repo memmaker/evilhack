@@ -2026,6 +2026,7 @@ boolean at_stairs, falling, portal;
     if (!In_icequeen_branch(&u.uz0) && Iniceq
         && !u.uevent.iceq_entered) {
         u.uevent.iceq_entered = 1;
+        WEB_SOUND("eerie_wail"); /* RVIP sound */
         You("arrive in a frozen, barren wasteland.");
         pline_The("remnants of a once majestic forest stretch out before you.");
 #ifdef MICRO
@@ -2048,6 +2049,7 @@ boolean at_stairs, falling, portal;
     if (!In_goblintown(&u.uz0) && Ingtown
         && !u.uevent.gtown_entered) {
         u.uevent.gtown_entered = 1;
+        WEB_SOUND("goblinwarparty"); /* RVIP sound */
         You("have entered Goblin Town, the lair of the Goblin King.");
 #ifdef MICRO
         display_nhwindow(WIN_MESSAGE, FALSE);

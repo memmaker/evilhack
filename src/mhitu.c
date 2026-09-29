@@ -79,7 +79,8 @@ struct attack *mattk;
     const char *pfmt = 0;
     char *Monst_name = Monnam(mtmp);
 
-    WEB_SOUND("hit1"); /* RVIP sound */
+    WEB_SOUND(mtmp->data == &mons[PM_GHOST] && mattk->aatyp == AT_TUCH
+              ? "ghost" : "hit1"); /* RVIP sound */
     /* Note: if opposite gender, "seductively" */
     /* If same gender, "engagingly" for nymph, normal msg for others */
     if ((compat = could_seduce(mtmp, &youmonst, mattk)) != 0

@@ -6679,6 +6679,7 @@ int dx, dy;   /* door location; ignored for tins */
                 }
             }
         }
+        if (door_count) WEB_SOUND("foop"); /* RVIP sound */
         if (door_count)
             pline("As the door gives way, you %s the other door%s sealing.",
                   Deaf ? "sense" : "hear", door_count > 1 ? "s" : "");

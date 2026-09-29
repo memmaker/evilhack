@@ -5919,10 +5919,12 @@ struct monst *mtmp;
             pline("%s %s.", Monnam(mtmp),
                   !rn2(8) ? "mumbles, \"BRAAAAAAAAINS...\"" :
                   !rn2(3) ? "groans" : "moans");
-        else if (!rn2(4) && !Deaf)
+        else if (!rn2(4) && !Deaf) {
+            WEB_SOUND("zombie"); /* RVIP sound */
             You_hear("%s.",
                      !rn2(8) ? "a low voice mumble \"UUUNNNNGGHH...\"" :
                      !rn2(3) ? "a low groaning" : "a low moaning");
+        }
     }
     if (mtmp->data == &mons[PM_MEDUSA]) {
         int i;

@@ -59,6 +59,8 @@ int expltype;
     short exploding_wand_typ = 0;
     boolean you_exploding = (olet == MON_EXPLODE && type >= 0);
 
+    if (olet != TRAPPED_DOOR && olet != FORGE_EXPLODE)
+        WEB_SOUND("explosion"); /* RVIP sound */
     if (olet == TRAPPED_DOOR || olet == FORGE_EXPLODE) { /* exploding doors and forges */
         exploding_wand_typ = type;
     }
