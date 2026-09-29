@@ -42,18 +42,26 @@ dosounds()
             "bubbling water.", "water falling on coins.",
             "the splashing of a naiad.", "a soda fountain!",
         };
-        You_hear1(fountain_msg[rn2(3) + hallu]);
+        int k = rn2(3) + hallu;
+        if (!hallu)
+            WEB_SOUND(k == 2 ? "naiad" : "bubbs"); /* RVIP sound */
+        You_hear1(fountain_msg[k]);
     }
     if (level.flags.nsinks && !rn2(300)) {
         static const char *const sink_msg[3] = {
             "a slow drip.", "a gurgling noise.", "dishes being washed!",
         };
-        You_hear1(sink_msg[rn2(2) + hallu]);
+        int k = rn2(2) + hallu;
+        if (!hallu)
+            WEB_SOUND(k ? "gurgling" : "drip"); /* RVIP sound */
+        You_hear1(sink_msg[k]);
     }
     if (level.flags.nforges && !rn2(300)) {
         static const char *const forge_msg[3] = {
             "a slow bubbling.", "crackling flames.", "chestnuts roasting on an open fire.",
         };
+        if (!hallu)
+            WEB_SOUND("forge_lava"); /* RVIP sound */
         You_hear1(forge_msg[rn2(2) + hallu]);
     }
     if (level.flags.has_court && !rn2(200)) {
@@ -143,6 +151,7 @@ dosounds()
             }
                 /*FALLTHRU*/
             case 0:
+                WEB_SOUND("footsteps"); /* RVIP sound */
                 You_hear("the footsteps of a guard on patrol.");
                 break;
             case 2:
@@ -284,7 +293,10 @@ dosounds()
                 "someone cursing shoplifters.",
                 "the chime of a cash register.", "Neiman and Marcus arguing!",
             };
-            You_hear1(shop_msg[rn2(2) + hallu]);
+            int k = rn2(2) + hallu;
+            if (k == 1)
+                WEB_SOUND("register"); /* RVIP sound */
+            You_hear1(shop_msg[k]);
         }
         return;
     }
@@ -365,7 +377,9 @@ dosounds()
             "a howling wind.",
             "someone singing \"Do You Want to Build a Snowman?\""
         };
-        You_hear1(icequeenbranch_msg[rn2(2 + hallu)]);
+        int k = rn2(2 + hallu);
+        WEB_SOUND(k == 0 ? "eerie_wail" : k == 1 ? "wind" : "snowman_song"); /* RVIP sound */
+        You_hear1(icequeenbranch_msg[k]);
         return;
     }
     if (ledger_no(&u.uz) == ledger_no(&valley_level) + 1
@@ -385,6 +399,7 @@ dosounds()
             "what sounds like a goblin war party off in the distance.",
             "a chorus singing \"We are the Lollipop Guild\"..."
         };
+        WEB_SOUND("goblinwarparty"); /* RVIP sound */
         You_hear1(gtown_msg[rn2(2 + hallu)]);
         return;
     }
@@ -772,37 +787,46 @@ struct monst *mtmp;
         break;
     case MS_BARK:
         if (flags.moonphase == FULL_MOON && night()) {
-            pline_msg = "howls.";
+            { WEB_SOUND("howling"); /* RVIP sound */
+              pline_msg = "howls."; }
         } else if (mtmp->mpeaceful) {
             if (mtmp->mtame
                 && (mtmp->mconf || mtmp->mflee
                     || mtmp->mtrapped || mtmp->mentangled
                     || mtmp->mtame < 5))
-                pline_msg = "whines.";
+                { WEB_SOUND("dwhine"); /* RVIP sound */
+                  pline_msg = "whines."; }
             else if (mtmp->mtame && moves > EDOG(mtmp)->hungrytime)
-                pline_msg = "whines hungrily.";
+                { WEB_SOUND("dwhine"); /* RVIP sound */
+                  pline_msg = "whines hungrily."; }
             else if (mtmp->mtame && EDOG(mtmp)->hungrytime > moves + 1000)
-                pline_msg = "yips contentedly.";
+                { WEB_SOUND("yip"); /* RVIP sound */
+                  pline_msg = "yips contentedly."; }
             else {
                 if (mtmp->data
                     != &mons[PM_DINGO]) /* dingos do not actually bark */
-                    pline_msg = "barks.";
+                    { WEB_SOUND("bark"); /* RVIP sound */
+                      pline_msg = "barks."; }
             }
         } else {
-            pline_msg = "growls.";
+            { WEB_SOUND("growl"); /* RVIP sound */
+              pline_msg = "growls."; }
         }
         break;
     case MS_MEW:
         if (mtmp->mtame) {
             if (mtmp->mconf || mtmp->mflee || mtmp->mtrapped
                 || mtmp->mentangled || mtmp->mtame < 5)
-                pline_msg = "yowls.";
+                { WEB_SOUND("yowl"); /* RVIP sound */
+                  pline_msg = "yowls."; }
             else if (moves > EDOG(mtmp)->hungrytime)
                 pline_msg = "meows.";
             else if (EDOG(mtmp)->hungrytime > moves + 1000)
-                pline_msg = "purrs.";
+                { WEB_SOUND("purr"); /* RVIP sound */
+                  pline_msg = "purrs."; }
             else
-                pline_msg = "mews.";
+                { WEB_SOUND("mew"); /* RVIP sound */
+                  pline_msg = "mews."; }
             break;
         } else
             pline_msg = mtmp->mpeaceful ? "snarls." : "growls!";
@@ -856,7 +880,8 @@ struct monst *mtmp;
         if (mtmp->mtame) {
             if (mtmp->mconf || mtmp->mflee || mtmp->mtrapped
                 || mtmp->mentangled || mtmp->mtame < 5)
-                pline_msg = "hisses.";
+                { WEB_SOUND("hissing"); /* RVIP sound */
+                  pline_msg = "hisses."; }
             else if (moves > EDOG(mtmp)->hungrytime)
                 pline_msg = "squeals hungrily.";
             else if (EDOG(mtmp)->hungrytime > moves + 1000)
@@ -865,7 +890,8 @@ struct monst *mtmp;
                 pline_msg = "chitters.";
             break;
         } else
-            pline_msg = mtmp->mpeaceful ? "squeaks." : "loudly squeaks!";
+            { WEB_SOUND("mouse"); /* RVIP sound */
+              pline_msg = mtmp->mpeaceful ? "squeaks." : "loudly squeaks!"; }
         break;
     case MS_BAT:
         if (mtmp->mtame) {
@@ -931,7 +957,8 @@ struct monst *mtmp;
                 pline_msg = "softly hisses.";
             break;
         } else if (!mtmp->mpeaceful) {
-            pline_msg = "hisses!";
+            { WEB_SOUND("hissing"); /* RVIP sound */
+              pline_msg = "hisses!"; }
         } else
             return 0; /* no sound */
         break;
@@ -948,7 +975,8 @@ struct monst *mtmp;
                 pline_msg = "grunts.";
             break;
         } else if (!mtmp->mpeaceful) {
-            pline_msg = "hisses!";
+            { WEB_SOUND("hissing"); /* RVIP sound */
+              pline_msg = "hisses!"; }
         } else
             return 0; /* no sound */
         break;
@@ -960,12 +988,14 @@ struct monst *mtmp;
             else if (moves > EDOG(mtmp)->hungrytime)
                 pline_msg = "rumbles.";
             else if (EDOG(mtmp)->hungrytime > moves + 1000)
-                pline_msg = "purrs.";
+                { WEB_SOUND("purr"); /* RVIP sound */
+                  pline_msg = "purrs."; }
             else
                 pline_msg = "softly hisses.";
             break;
         } else if (!mtmp->mpeaceful) {
-            pline_msg = "hisses!";
+            { WEB_SOUND("hissing"); /* RVIP sound */
+              pline_msg = "hisses!"; }
         } else
             return 0; /* no sound */
         break;
@@ -991,16 +1021,20 @@ struct monst *mtmp;
         if (mtmp->mtame) {
             if (mtmp->mconf || mtmp->mflee || mtmp->mtrapped
                 || mtmp->mentangled || mtmp->mtame < 5)
-                pline_msg = "neighs.";
+                { WEB_SOUND("neigh"); /* RVIP sound */
+                  pline_msg = "neighs."; }
             else if (moves > EDOG(mtmp)->hungrytime)
                 pline_msg = "whinnies.";
             else if (EDOG(mtmp)->hungrytime > moves + 1000)
-                pline_msg = "whickers contentedly.";
+                { WEB_SOUND("whicker"); /* RVIP sound */
+                  pline_msg = "whickers contentedly."; }
             else
-                pline_msg = "whickers.";
+                { WEB_SOUND("whicker"); /* RVIP sound */
+                  pline_msg = "whickers."; }
             break;
         } else
-            pline_msg = mtmp->mpeaceful ? "neighs." : "neighs!";
+            { WEB_SOUND("neigh"); /* RVIP sound */
+              pline_msg = mtmp->mpeaceful ? "neighs." : "neighs!"; }
         break;
     case MS_WAIL:
         pline_msg = "wails mournfully.";
