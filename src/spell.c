@@ -633,6 +633,7 @@ struct obj *spellbook;
         }
         spellbook->in_use = FALSE;
 
+        WEB_SOUND("book"); /* RVIP sound */
         You("begin to %s the runes.",
             spellbook->otyp == SPE_BOOK_OF_THE_DEAD ? "recite" : "memorize");
     }
@@ -970,11 +971,13 @@ int skill;
         }
         /* the higher the skill in evocation-based spells, the longer the effect */
         incr_itimeout(&HBarkskin, rn1(10, HBarkskin ? (duration / 5) : duration));
+        WEB_SOUND("barkskin"); /* RVIP sound */
         find_ac(); /* adjust AC; dmg reduction handled in hitmu() */
     } else if (!youdefend) {
         if (canseemon(mdef))
             pline("A thick layer of bark covers %s %s!",
                   s_suffix(Monnam(mdef)), mbodypart(mdef, SKIN));
+        WEB_SOUND("barkskin"); /* RVIP sound */
         mdef->mextrinsics |= MR2_BARKSKIN;
         mdef->mbarkskintime = rn1(10, (mdef->iswiz || is_prince(mdef->data)
                                        || mdef->data->msound == MS_NEMESIS
@@ -1110,6 +1113,7 @@ int skill;
                               mon_nam(mdef), mhis(mdef), makeplural(mbodypart(mdef, LEG)));
                 pline("%s is entangled!", Monnam(mdef));
             }
+            WEB_SOUND("entangle"); /* RVIP sound */
             mdef->mentangled = 1;
             /* 3-8 turns at basic, 4-9 turns at skilled,
                5-10 turns at expert. at unskilled/restricted,
@@ -1205,6 +1209,7 @@ int skill;
     do_clear_area(u.ux, u.uy, range, grow_grass, &madegrass);
 
     if (madegrass) {
+    WEB_SOUND("grass_growing"); /* RVIP sound */
         if (Hallucination)
             pline("Whoa... so much grass, dude!");
         else

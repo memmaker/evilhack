@@ -332,6 +332,7 @@ newman()
 {
     int i, oldlvl, newlvl, hpmax, enmax;
 
+    WEB_SOUND("polymorph"); /* RVIP sound */
     oldlvl = u.ulevel;
     newlvl = oldlvl + rn1(5, -2);     /* new = old + {-2,-1,0,+1,+2} */
     if (newlvl > 127 || newlvl < 1) { /* level went below 0? */
@@ -917,6 +918,7 @@ int mntmp;
     if (Hidinshell)
         toggleshell();
 
+    WEB_SOUND("polymorph"); /* RVIP sound */
     /* KMH, conduct */
     if (!u.uconduct.polyselfs++)
         livelog_printf(LL_CONDUCT,
@@ -1554,6 +1556,7 @@ rehumanize()
 {
     boolean was_flying = (Flying != 0);
     boolean was_not_flying = (HFlying == 0);
+    WEB_SOUND("polymorph"); /* RVIP sound */
 
     /* You can't revert back while unchanging */
     if (Unchanging) {

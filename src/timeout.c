@@ -800,6 +800,7 @@ nh_timeout()
                     You("don't feel very smooth anymore.");
                 break;
             case BARKSKIN:
+                WEB_SOUND("barkskin"); /* RVIP sound */
                 pline_The("bark covering your %s completely disappears.",
                           mbodypart(&youmonst, SKIN));
                 find_ac();
