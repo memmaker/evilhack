@@ -150,6 +150,7 @@ struct monst *mtmp;
                 ygold = splitobj(ygold, tmp);
             else
                 setnotworn(ygold);
+            WEB_SOUND("leprechaun"); /* RVIP sound */
             Your("purse feels lighter.");
         } else {
             pline("%s steals %s!", Monnam(mtmp),
@@ -196,6 +197,7 @@ struct monst *mtmp;
             ygold = splitobj(ygold, tmp);
         else
             setnotworn(ygold);
+        WEB_SOUND("leprechaun"); /* RVIP sound */
         Your("purse feels lighter.");
     } else {
         pline("%s deftly palms %s!", Monnam(mtmp),
@@ -622,6 +624,7 @@ char *objnambuf;
         subfrombill(otmp, shop_keeper(*u.ushops));
     freeinv(otmp);
     /* if attached ball was taken, uball and uchain are now Null */
+    if (mtmp->data == &mons[PM_MONKEY]) WEB_SOUND("monkey"); /* RVIP sound */
     pline("%s%s stole %s.",
           named ? upstart(strcpy(pronounbuf, mhe(mtmp))) : Monnam(mtmp),
           (was_punished && !Punished) ? " removed your chain and" : "",

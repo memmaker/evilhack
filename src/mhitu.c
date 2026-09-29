@@ -253,6 +253,7 @@ struct attack *mattk;
         map_invisible(mtmp->mx, mtmp->my);
 
     if (could_seduce(mtmp, &youmonst, mattk) && !mtmp->mcan) {
+        WEB_SOUND("giggle"); /* RVIP sound */
         pline("%s pretends to be friendly.", Monnam(mtmp));
     } else if (!DEADMONSTER(mtmp)) {
         if (!flags.verbose || (!nearmiss && !blocker)) {
@@ -4313,6 +4314,7 @@ struct monst *mon;
         return 0;
     }
     seewho = canseemon(mon);
+    WEB_SOUND("attraction"); /* RVIP sound */
     if (!seewho)
         pline("Someone caresses you...");
     else
@@ -4460,10 +4462,11 @@ struct monst *mon;
     }
 
     if (uarm || uarmc) {
-        if (!Deaf)
+        if (!Deaf) {
+            WEB_SOUND("incubus_disappointment"); /* RVIP sound */
             verbalize("You're such a %s; I wish...",
                       flags.female ? "sweet lady" : "nice guy");
-        else if (seewho)
+        } else if (seewho)
             pline("%s appears to sigh.", Monnam(mon));
         /* else no regret message if can't see or hear seducer */
 
@@ -4475,6 +4478,7 @@ struct monst *mon;
         adjalign(1);
 
     /* by this point you have discovered mon's identity, blind or not... */
+    WEB_SOUND("incubus_friendly"); /* RVIP sound */
     pline("Time stands still while you and %s lie in each other's arms...",
           noit_mon_nam(mon));
     /* 3.6.1: a combined total for charisma plus intelligence of 35-1

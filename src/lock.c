@@ -1229,6 +1229,7 @@ struct obj *obj, *otmp; /* obj *is* a box */
     case SPE_WIZARD_LOCK:
         if (!obj->olocked) { /* lock it; fix if broken */
             WEB_SOUND("metal"); /* RVIP sound */
+            WEB_SOUND("metal"); /* RVIP sound */
             pline("Klunk!");
             obj->olocked = 1;
             obj->obroken = 0;

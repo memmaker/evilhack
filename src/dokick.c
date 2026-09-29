@@ -708,8 +708,10 @@ xchar x, y;
     if (Is_box(kickedobj)) {
         boolean otrp = kickedobj->otrapped;
 
-        if (range < 2)
+        if (range < 2) {
+            WEB_SOUND(kickedobj->otyp == IRON_SAFE ? "metal" : "thud"); /* RVIP sound */
             pline("%s", kickedobj->otyp == IRON_SAFE ? "CLANG!" : "THUD!");
+        }
         if (kickedobj->otyp == IRON_SAFE) {
             return 1;
         }

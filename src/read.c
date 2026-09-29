@@ -2073,10 +2073,13 @@ struct obj *sobj; /* sobj - scroll or fake spellbook for spell */
                 Your("mind releases itself from mundane concerns.");
             else if (!strncmpi(plname, "Maud", 4))
                 pline("As your mind turns inward on itself, you forget everything else.");
-            else if (rn2(2))
+            else if (rn2(2)) {
+                WEB_SOUND("maud"); /* RVIP sound */
                 pline("Who was that Maud person anyway?");
-            else
+            } else {
+                WEB_SOUND("maud"); /* RVIP sound */
                 pline("Thinking of Maud you forget everything else.");
+            }
             exercise(A_WIS, FALSE);
         }
         break;
@@ -2734,8 +2737,10 @@ xchar x, y;      /* coordinates for centering do_clear_area() */
             if (you) {
                 if (mon)
                     pline("A celestial glow surrounds you.");
-                else
+                else {
+                    WEB_SOUND("light"); /* RVIP sound */
                     pline("A lit field surrounds you!");
+                }
             } else {
                 for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
                     if (!DEADMONSTER(mtmp)
@@ -3319,8 +3324,10 @@ struct obj *sobj;
                                 ? sobj : (struct obj *) 0;
 
     /* KMH -- Punishment is still okay when you are riding */
-    if (!reuse_ball)
+    if (!reuse_ball) {
+        WEB_SOUND("chain"); /* RVIP sound */
         You("are being punished for your misbehavior!");
+    }
     if (Punished) {
         Your("iron ball gets heavier.");
         uball->owt += IRON_BALL_W_INCR * (1 + (sobj ? sobj->cursed : 0));

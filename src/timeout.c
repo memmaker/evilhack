@@ -652,7 +652,10 @@ nh_timeout()
 
     /* Druids have a sense for when they can use #wildshape again */
     if (Role_if(PM_DRUID) && u.uwildshape == 20)
+    {
+        WEB_SOUND("tinkly_magic"); /* RVIP sound */
         You_feel("your wildshape ability start to return.");
+    }
 
     /* Druids have an innate sense of when they will lose their
        current creature form and revert back to their original form */
@@ -955,6 +958,7 @@ nh_timeout()
                      * to this number must be thoroughly play tested.
                      */
                     if ((inv_weight() > -500)) {
+                        WEB_SOUND("noise"); /* RVIP sound */
                         You("make a lot of noise!");
                         wake_nearby();
                     }

@@ -150,11 +150,14 @@ const char *name; /* if null, then format `*objp' */
             } else {
                 pline("%s %s you.", upstart(onmbuf), vtense(onmbuf, "miss"));
             }
-        } else
+        } else {
+            WEB_SOUND("almost"); /* RVIP sound */
             You("are almost hit by %s.", onm);
+        }
 
         return 0;
     } else {
+        WEB_SOUND(obj && obj->otyp == DART ? "dart" : obj && obj->otyp == ARROW ? "arrow" : "hit1"); /* RVIP sound */
         if (obj
             && (obj->oartifact ||
                 ((obj->oclass == WEAPON_CLASS

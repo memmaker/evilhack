@@ -1426,6 +1426,7 @@ drinkfountain()
     }
 
     if (fate < 10) {
+        WEB_SOUND("dunk"); /* RVIP sound */
         pline_The("cool draught refreshes you.");
         u.uhunger += rnd(10); /* don't choke on water */
         newuhs(FALSE);
