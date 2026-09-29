@@ -1614,8 +1614,10 @@ boolean telekinesis; /* not picking it up directly by hand */
         return res;
 
     /* Whats left of the special case for gold :-) */
-    if (obj->oclass == COIN_CLASS)
+    if (obj->oclass == COIN_CLASS) {
         context.botl = 1;
+        WEB_SOUND("gold"); /* RVIP sound */
+    }
     if (obj->quan != count && obj->otyp != LOADSTONE)
         obj = splitobj(obj, count);
 

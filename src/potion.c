@@ -720,6 +720,7 @@ dodrink()
             return 1;
         }
     }
+    WEB_SOUND("quaff"); /* RVIP sound */
     return dopotion(otmp);
 }
 

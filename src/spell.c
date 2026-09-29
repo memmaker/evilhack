@@ -1615,6 +1615,7 @@ boolean wiz_cast;
     } else {
         u.uen -= energy;
     }
+    WEB_SOUND("spell"); /* RVIP sound */
 
     /* successful casting increases the amount of time the cast
        spell is known, intelligence determines how much extra time

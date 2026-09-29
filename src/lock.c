@@ -1058,6 +1058,7 @@ int x, y;
             b_trapped("door", FINGER, door_material(door), cc.x, cc.y);
         } else
             door->doormask = D_ISOPEN;
+        WEB_SOUND("door_open"); /* RVIP sound */
         feel_newsym(cc.x, cc.y); /* the hero knows she opened it */
         unblock_point(cc.x, cc.y); /* vision: new see through there */
     } else {
@@ -1200,6 +1201,7 @@ doclose()
             || rn2(25) < (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
             pline_The("door closes.");
             door->doormask = D_CLOSED;
+            WEB_SOUND("door_close"); /* RVIP sound */
             feel_newsym(x, y); /* the hero knows she closed it */
             block_point(x, y); /* vision:  no longer see there */
         } else {

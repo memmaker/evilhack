@@ -2249,6 +2249,7 @@ boolean already_partly_eaten;
 {
     const char *old_nomovemsg, *save_nomovemsg;
 
+    WEB_SOUND("eat"); /* RVIP sound */
     debugpline2("start_eating: %s (victual = %s)",
                 /* note: fmt_ptr() returns a static buffer but supports
                    several such so we don't need to copy the first result
@@ -4107,6 +4108,8 @@ boolean incr;
             context.travel = context.travel1 = context.mv = context.run = 0;
             break;
         }
+        if (newhs >= HUNGRY && newhs > u.uhs)
+            WEB_SOUND("hunger"); /* RVIP sound */
         u.uhs = newhs;
         context.botl = 1;
         bot();

@@ -232,6 +232,7 @@ const char *drainer; /* cause of death, if drain should be fatal */
         return;
 
     if (u.ulevel > 1) {
+        WEB_SOUND("leveldown"); /* RVIP sound */
         pline("%s level %d.", Goodbye(), u.ulevel);
         u.ulevel--;
         /* remove intrinsic abilities */
@@ -308,6 +309,7 @@ boolean incr; /* true iff via incremental experience growth */
 {             /*        (false for potion of gain level)    */
     int hpinc, eninc;
 
+    WEB_SOUND("levelup"); /* RVIP sound */
     if (!incr)
         You_feel("more experienced.");
 

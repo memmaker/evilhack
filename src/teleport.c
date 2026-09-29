@@ -349,6 +349,8 @@ int teleds_flags;
             is_teleport = (teleds_flags & TELEDS_TELEPORT) != 0;
     struct monst *vault_guard = vault_occupied(u.urooms) ? findgd() : 0;
 
+    if (is_teleport)
+        WEB_SOUND("teleport"); /* RVIP sound */
     if (u.utraptype == TT_BURIEDBALL) {
         /* unearth it */
         buried_ball_to_punishment();

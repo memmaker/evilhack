@@ -648,4 +648,13 @@ extern const struct trap_recipe trap_fusions[]; /* array of trap recipes */
 #define DEVTEAM_EMAIL "admin@hardfought.org"
 #define DEVTEAM_URL "https://github.com/k21971/EvilHack"
 
+/* RVIP stage 6: sound events named at game actions (win/web/winweb.c
+   hands them to the page, which plays sound/<name>.wav when switched on) */
+#ifdef WEB_GRAPHICS
+extern void FDECL(web_sound, (const char *));
+#define WEB_SOUND(s) web_sound(s)
+#else
+#define WEB_SOUND(s)
+#endif
+
 #endif /* HACK_H */

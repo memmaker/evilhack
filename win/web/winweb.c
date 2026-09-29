@@ -30,6 +30,7 @@ EM_ASYNC_JS(void, js_end, (void), { await Module.nh.end(); });
 /* game over (how = DIED..ASCENDED, src/end.c): the hook for ev=win (stage 9) */
 EM_JS(void, js_over, (int how), { if (Module.nh.over) Module.nh.over(how); });
 /* autosave: the page asks (hide, Export); after a checkpoint it syncs IDBFS */
+EM_JS(void, js_sound, (const char *s), { if (Module.nh.sound) Module.nh.sound(UTF8ToString(s)); });
 EM_JS(int, js_save_req, (void), { var r = Module.nh.saveReq | 0; Module.nh.saveReq = 0; return r; });
 EM_JS(void, js_saved, (void), { if (Module.nh.saved) Module.nh.saved(); });
 
@@ -92,9 +93,21 @@ web_push_key(int k)
 
 /* src/end.c really_done(): the run is over (how = DIED .. ASCENDED);
    the page learns how (stage 9 sends ev=win for ASCENDED from here) */
+/* RVIP stage 6: one sound event (WEB_SOUND in hack.h); the page mutes */
+void
+web_sound(const char *name)
+{
+    if (!program_state.restoring)
+        js_sound(name);
+}
+
 void
 web_game_over(int how)
 {
+    if (how == ASCENDED)
+        web_sound("win");
+    else if (how < PANICKED)
+        web_sound("death");
     js_over(how);
 }
 

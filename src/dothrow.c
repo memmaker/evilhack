@@ -1403,6 +1403,7 @@ boolean twoweap; /* used to restore twoweapon mode if wielded weapon returns */
                                    && P_SKILL(P_HAMMER) >= P_SKILLED
                                    && (wep_mask & W_WEP) != 0));
 
+    WEB_SOUND("throw"); /* RVIP sound */
     notonhead = FALSE; /* reset potentially stale value */
     if (((obj->cursed && u.ualign.type != A_NONE)
           || (Role_if(PM_PRIEST) && (is_pierce(obj) || is_slash(obj)))

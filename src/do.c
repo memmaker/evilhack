@@ -1555,6 +1555,7 @@ boolean at_stairs, falling, portal;
     int dist = depth(newlevel) - depth(&u.uz);
     boolean do_fall_dmg = FALSE;
 
+    WEB_SOUND("stairs"); /* RVIP sound */
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
         newlevel->dlevel = dunlevs_in_dungeon(newlevel);
     if (newdungeon && In_endgame(newlevel)) { /* 1st Endgame Level !!! */
