@@ -1,3 +1,54 @@
+## EvilHack in the browser (RVIP port)
+
+Based on EvilHack 0.9.3 · memmaker/evilhack @ c444f6a
+
+This repository is **EvilHack 0.9.3** by Keith Simpson (k21971), upstream
+[k21971/EvilHack `master` @ `c444f6a`](https://github.com/k21971/EvilHack/tree/c444f6a3ab1e9f16d0676961dba86f628e91c6ba)
+("Switch status from beta to released", 2026-07-12), plus a web port that runs
+the game in a browser (WebAssembly). Everything the port changes is in the
+compare view:
+<https://github.com/memmaker/evilhack/compare/c444f6a3ab1e9f16d0676961dba86f628e91c6ba...main>
+
+(The public repository is `memmaker/evilhack`; this work was done in the
+cloud repository `memmaker/evilhack-cloud`, which is split into the public one.)
+
+Gameplay is unchanged. The port adds:
+
+- a web window port (`win/web/winweb.c`, `web/`): separate map, messages,
+  status, inventory, equipment and visible-things windows (draggable, resizable,
+  per-window text size), one-window mode, fonts;
+- auto-explore and walking to the stairs, no `--More--` prompts;
+- an Enter command menu and cursor-driven inventory menus with item actions;
+- tiles from the NetHack 3.6 tile sources (text mode switchable);
+- synthesized sound effects for game actions (off by default);
+- saving in the browser (IndexedDB, autosave checkpoint), in-page help.
+
+Play: <https://ruzzoli.de/roguelikes/evilhack/>
+
+### Build
+
+1. Native build first (generated headers, level compilers, data); needs `bison`
+   and `flex`, serial make:
+
+       sh sys/unix/setup.sh sys/unix/hints/linux
+       make PREFIX=$PWD/install HACKDIR=$PWD/playground SHELLDIR=$PWD/install/bin \
+            YACC="bison -y" LEX=flex all install
+
+2. Web build with Emscripten (`emcc` on `PATH`) and the shared RVIP page
+   scripts (`rvip-wm.js`, `rvip-app.js`, `rvip-sound.js`) in `$RVIP_WEB`:
+
+       RVIP_WEB=~/Games/rvip-tools/web sh web/build.sh
+
+   Output: `web/dist/` (deployable) and `web/serve/` (serve it and open
+   `/evilhack/`).
+
+Licence: the NetHack General Public License, as upstream (`dat/license`,
+`LICENSE`). The web port's additions are under the same licence.
+
+The upstream README follows.
+
+---
+
 ## EvilHack
 
 EvilHack is a NetHack variant that is designed to be a much more challenging
