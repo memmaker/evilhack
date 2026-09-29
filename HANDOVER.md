@@ -7,7 +7,72 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 - **Stage 1 (Get + build): done.**
 - **Stage 2 (Explore + stairs + no `--More--`): done.**
 - **Stage 3 (Enter menu + inventory): done.**
-- **Stage 4 (Tiles): done.** Next: **stage 5** (rvip-wm page and windows).
+- **Stage 4 (Tiles): done.**
+- **Stage 5 (Web page and windows): done.** Next: **stage 6** (docs and sound).
+- Live URL (after deploy): https://ruzzoli.de/roguelikes/evilhack/ — **ready to
+  deploy** (`web/build.sh`, then `web/deploy.sh` from the Mac; not run: no ssh).
+  **Mac pane check still owed** (stages 1-5 only seen headless).
+
+### Stage 5 facts
+- Page: `web/index.html` + `web/evilhack.js` (from dynahack.js), shared
+  `../rvip-wm.js`, `../rvip-app.js`, `../rvip-sound.js` linked by `build.sh`
+  into gitignored `web/serve/` (plus `fonts` from `ROGUELIKES`, default
+  `~/Games/roguelikes-index`; cloud `/home/user/roguelikes`). Serve
+  `web/serve/`, open `/evilhack/`.
+- Windows (all RvipWM): Map (only canvas; tiles or text), Log messages,
+  Status, Inventory, Equipment (hidden by default), Visible. Default multi
+  tree: msg/map/stat left, inv/vis right. One-window: msg/map/stat, no title
+  bars. Map A−/A+ = zoom (tiles: 8/16/32/48/64 px, text ±2 px), kept per mode in
+  `L.cells`; default fits the map, never below 16 px (tiles) / 12 px (text):
+  then the camera (`RvipWM.center`) scrolls. No hero cursor.
+- C → JS (`win/web/winweb.c`): js_text ids 0 prompt, 1 status, 2 inventory,
+  3 pop-up, 4/5/6 messages (C folds repeats `(xN)`), 7 equipment rows, 8
+  Visible lines, 9 prompt line (prompt, else newest message since the last
+  message clear). Rows: `tile\tletter\tsel\tcolour\tsymbol\ttext`; menucolors
+  applied in `web_add_menu` (`get_menu_coloring`). Status: own
+  `web_status_update` (WC2_HILITE_STATUS|FLUSH|RESET) on top of
+  `genl_status_update`'s `status_vals`; segments `clr.attr|text` joined by
+  `\x1f`, labels before `:` uncoloured, conditions coloured by the masks.
+  Equipment: game slots (uwep, uswapwep, uquiver, uarm*, rings, amulet,
+  blindfold), `doname` + menucolors. Visible: `glyph_at` per square;
+  monsters need `m_at` + `canspotmon` (worm tails skipped), name from
+  `mons[glyph_to_mon]` + tame/peaceful + `called`; objects in `cansee`
+  squares named by `distant_name(vobj_at, xname)` (obj_typename when
+  hallucinating). Bracers show in the Shield slot (EvilHack's own slot).
+- Defaults (`src/options.c` `web_default_options()`, before the rc file /
+  EVILHACKOPTIONS so the player overrides): number_pad:0, autopickup,
+  pickup_types:$, menucolors (+ upstream template MENUCOLORs), autodescribe,
+  time, statushilites:10 + the upstream `.evilhackrc.template` hilite_status
+  set. verbose stays on; no gameplay option changed. Page sound off.
+- Name: `window.prompt` once (fresh browser, no save), stored in
+  `<dir>/web-name`, passed as `-u`; a save/lock file's name wins; a cancelled
+  prompt plays as `Hero` (not stored).
+- Saves: IDBFS at `RvipApp.dir` (`/evilhack`, `RvipApp.mount`). Autosave =
+  INSURANCE `save_currentstate()` in `getkey()` idle 1 s at the command prompt
+  after `moves` changed, or when the page sets `nh.saveReq` (hidden tab,
+  Export) → `js_saved()` → IDBFS sync. Reload: `getlock()` answers `r`
+  silently under `__EMSCRIPTEN__` → "Your game was restored from its
+  autosave." (2nd recovery after a recover also tested). Export: the S save
+  file, else the level files as a JSON bundle; Import takes both. S → overlay
+  → Play again restores. Death/quit → `web_game_over(how)` (src/end.c
+  `really_done`) → `Module.nh.over(how)` (**stage 9 hooks ev=win here**,
+  ASCENDED) → sync → overlay → reload = new game, same name.
+  `beforeunload` warns while running.
+- Help: `web/make-help.py` basic stub (keys, saving, windows) → help.html;
+  real guide in stage 6.
+- Tests (scratchpad `s5/`: `a.cjs` birth + windows + Enter menu + help +
+  text mode; `b.cjs` A+ only one window, map zoom, rename, drag, reload keeps
+  all, options menu, autosave no pixel change, reload recovers same turn and
+  position ×2, S save/restore, quit → over hook → new game no name prompt,
+  no `--More--`, no console errors; `d.cjs` explore, resize 1000×650 →
+  1440×900 → 1200×750 with `i` open → 760×500, all dividers both ends,
+  one-window). Shared `smoke`/`idbtest`/`resize` (copied to `scratchpad/rt`
+  with a local `www`): all clean. Screens read: `a-page`, `a-enter`,
+  `d-resize-pop`.
+- Open: stair walk in `d.cjs` blocked by a hostile jackal in view (stairs
+  tested in stage 2); shop only seen in messages; one-window mode is
+  msg/map/stat without title bars (like siblings), not an 80×24 scaled
+  screen.
 
 ### Stage 4 facts
 - **Set:** EvilHack's own NetHack 3.6 16x16 set, `win/share/{monsters,
@@ -259,12 +324,8 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
   objects removed afterwards (`make clean` in the tree too).
 
 ### Quirks / open
-- No `Who are you?` in the browser: `USER=player` becomes the name (stage 5
-  should ask for a name or let the page set it).
 - Player selection is the slashem-style menu sequence (role, race, gender,
   alignment filtered by `ok_*` from role.c), not tty's full selection menu.
-- Web defaults (number_pad off, autopickup `$`, pickup_types, hilite_status,
-  menucolors) not baked yet; `web/sysconf` carries no OPTIONS.
 - Tiles done in stage 4. Saves/IDBFS recovery and `ev=win` not wired
   (stages 5/9).
 - Deploy: not possible from the cloud (no `web/deploy.sh` yet).
