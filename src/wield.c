@@ -1041,6 +1041,7 @@ int amount;
     } /* safe_limit block */
     if (!Blind) {
         xtime = (amount * amount == 1) ? "moment" : "while";
+        WEB_SOUND(amount < 0 ? "black" : "harp"); /* RVIP sound */
         pline("%s %s for a %s.",
               Yobjnam2(uwep, amount == 0 ? "violently glow" : "glow"),
               color, xtime);

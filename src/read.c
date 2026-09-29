@@ -1403,6 +1403,7 @@ struct obj *sobj; /* sobj - scroll or fake spellbook for spell */
                        : sblessed
                           ? rnd(3 - otmp->spe / 3)
                           : 1;
+        WEB_SOUND(s < 0 ? "black" : "harp"); /* RVIP sound */
         pline("%s %s%s%s%s for a %s.", Yname2(otmp),
               s == 0 ? "violently " : "",
               otense(otmp, Blind ? "vibrate" : "glow"),
@@ -1675,10 +1676,13 @@ struct obj *sobj; /* sobj - scroll or fake spellbook for spell */
                     ct++; /* pets don't laugh at you */
             }
         }
-        if ((otyp == SCR_SCARE_MONSTER || !ct) && !Deaf)
+        if ((otyp == SCR_SCARE_MONSTER || !ct) && !Deaf) {
+            WEB_SOUND((confused || scursed) ? "scare_monster_2"
+                                            : "scare_monster"); /* RVIP sound */
             You_hear("%s %s.", (confused || scursed) ? "sad wailing"
                                                      : "maniacal laughter",
                      !ct ? "in the distance" : "close by");
+        }
         break;
     }
     case SCR_BLANK_PAPER:
@@ -1692,6 +1696,7 @@ struct obj *sobj; /* sobj - scroll or fake spellbook for spell */
     case SPE_REMOVE_CURSE: {
         struct obj *obj;
 
+        WEB_SOUND("helping"); /* RVIP sound */
         You_feel(!Hallucination
                      ? (!confused ? "like someone is helping you."
                                   : "like you need some help.")
@@ -2280,6 +2285,7 @@ selective_remove_curse()
                        | INCLUDE_VENOM),
                       &pick_list, PICK_ANY, cursed_obj_filter);
     if (n > 0) {
+        WEB_SOUND("helping"); /* RVIP sound */
         You_feel(!Hallucination ? "like someone is helping you."
                                 : "in touch with the Universal Oneness.");
         for (i = 0; i < n; i++) {
