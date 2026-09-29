@@ -9,10 +9,35 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 - **Stage 3 (Enter menu + inventory): done.**
 - **Stage 4 (Tiles): done.**
 - **Stage 5 (Web page and windows): done.**
-- **Stage 6 (Docs and sound): done.** Next: **stage 7** (publish).
+- **Stage 6 (Docs and sound): done.**
+- **Stage 7 (Publish): done as far as the cloud allows.** Next: stage 8
+  (shrine). **Left for the Mac** (steps in `web/publish/APPLY.md`): apply
+  `web/publish/roguelikes-index.patch` + `card.png` → `img/evilhack.png` in
+  roguelikes-index (card, tree `<li>`, years.json, 41→42), og.py for the index
+  page, commit+push+deploy both repos, check live, pane check, repo split
+  (unshallow first; filter CLOUD.md/LESSONS.md).
 - Live URL (after deploy): https://ruzzoli.de/roguelikes/evilhack/ — **ready to
   deploy** (`web/build.sh`, then `web/deploy.sh` from the Mac; not run: no ssh).
   **Mac pane check still owed** (stages 1-5 only seen headless).
+
+### Stage 7 facts
+- Version line: **Based on EvilHack 0.9.3 · memmaker/evilhack @ c444f6a**
+  (upstream k21971/EvilHack master @ c444f6a3ab1e9f16d0676961dba86f628e91c6ba,
+  "Switch status from beta to released", 2026-07-12; matches `git log`, 24 of
+  our commits on top before stage 7). In README.md (new top section, upstream
+  text kept below; README and README.md are distinct names, no macOS clash),
+  Help "About this version" (+ compare link), `web/publish/docs-facts.md`.
+- Compare view: https://github.com/memmaker/evilhack/compare/c444f6a3ab1e9f16d0676961dba86f628e91c6ba...main
+- Card/tree: year 2019 (`dat/history`: work began 2018-10-20, public April
+  2019 on Hardfought), Keith Simpson (k21971), `<li>` under NetHack before
+  NetHack 5.0: code from NetHack 3.6.2, ideas/code from GruntHack and
+  SporkHack. Web cross-check not reachable (GitHub API returned nothing);
+  sources did not disagree. Card image: 60 sampled monster tiles, 384×160.
+- og block written into `web/index.html` by og.py's second loop in a scratch
+  copy (image `img/evilhack.png`); old description meta removed.
+- Fresh `git clone` of the branch: native build + `web/build.sh` OK, shared
+  `smoke.cjs` clean. The native build empties tracked `doc/Guidebook.txt`:
+  never commit it.
 
 ### Stage 6 facts
 - **Help:** `web/make-help.py` (self-contained, stdlib, no Docs folder) →
