@@ -117,8 +117,8 @@ z	Go northwest 1 space
 Z	Go northwest until you are on top of something
 ^Z	Go northwest until you are near something
 &. #0,1..4 vs -1
-<	Go up a staircase
->	Go down a staircase
+<	Go up a staircase, or walk to the nearest known up staircase
+>	Go down a staircase, or walk to the nearest known down staircase
 /	Show what type of thing a symbol corresponds to
 ?	Give a help message
 &? shell
@@ -129,6 +129,7 @@ Z	Go northwest until you are on top of something
 \	Show what object types have been discovered
 `	Show discovered types for one class of objects
 _	Travel via a shortest-path algorithm to a point on the map
+~	Auto-explore the level until something happens
 .	Rest one move while doing nothing
 &? rest_on_space
  	Rest one move while doing nothing

@@ -82,10 +82,18 @@ Commands:
                 autodescribe option will give information about the symbol
                 at each location you move the cursor onto.
         &       Tell what a command does.
-        <       Go up a staircase (if you are standing on it).
-        >       Go down a staircase (if you are standing on it).
+        <       Go up a staircase.  If you are not standing on one, walk
+                to the nearest known up staircase or ladder and stop there;
+                press < again to climb.  Any disturbance stops the walk.
+        >       Go down a staircase, the same way as < (never walks into a
+                trap door, hole or portal).
         .       Rest, do nothing for one turn.
         _       Travel via a shortest-path algorithm to a point on the map.
+        ~       Auto-explore: walk step by step to unexplored parts and to
+                objects not yet visited.  Stops when a hostile monster comes
+                into view, on any new message, on any key, or when a step
+                fails.  Avoids known traps, water and lava; opens closed
+                doors but stops at locked ones (and avoids them afterwards).
         a       Apply (use) a tool (pick-axe, key, lamp...).
         A       Remove all armor.
         ^A      Redo the previous command.
