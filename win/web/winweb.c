@@ -111,6 +111,33 @@ web_game_over(int how)
     js_over(how);
 }
 
+/* RVIP stage 9: run report to /roguelikes/beacon through the RvipWM outbox
+   (id + at stamped there, kept in IndexedDB 'rvip-outbox' until a 2xx).
+   EM_JS, not EM_ASM (commas); every value URL-encoded; unknowns omitted
+   (empty string / negative number); errors swallowed. */
+EM_JS(void, js_beacon, (const char *ev, const char *name, const char *killer,
+                        int depth, double score, double turns, int lvl), {
+    try {
+        var p = [['g', 'evilhack'], ['ev', UTF8ToString(ev)],
+                 ['name', name ? UTF8ToString(name) : ''],
+                 ['killer', killer ? UTF8ToString(killer) : ''],
+                 ['depth', depth], ['score', score], ['turns', turns], ['lvl', lvl]];
+        var q = p.filter(function (a) { return a[1] !== '' && !(a[1] < 0); })
+                 .map(function (a) { return a[0] + '=' + encodeURIComponent(a[1]); }).join('&');
+        window.nhBeacon = q; /* test hook */
+        if (window.RvipWM && RvipWM.report) RvipWM.report(q);
+        else fetch('/roguelikes/beacon?' + q, { keepalive: true, mode: 'no-cors' }).catch(function () {});
+    } catch (e) {}
+});
+
+/* called from src/end.c rvip_run_report() (really_done, before any key wait) */
+void
+web_run_report(const char *ev, const char *name, const char *killer,
+               int depth, long score, long turns, int lvl)
+{
+    js_beacon(ev, name, killer, depth, (double) score, (double) turns, lvl);
+}
+
 static void web_getlin(const char *, char *);
 static void web_putstr(winid, int, const char *);
 static winid web_create_nhwindow(int);

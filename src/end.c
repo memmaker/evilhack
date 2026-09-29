@@ -56,6 +56,9 @@ STATIC_DCL void FDECL(get_valuables, (struct obj *));
 STATIC_DCL void FDECL(sort_valuables, (struct valuable_data *, int));
 STATIC_DCL void FDECL(artifact_score, (struct obj *, BOOLEAN_P, winid));
 STATIC_DCL void FDECL(really_done, (int)) NORETURN;
+#ifdef WEB_GRAPHICS
+STATIC_DCL void FDECL(rvip_run_report, (int));
+#endif
 STATIC_DCL void FDECL(savelife, (int));
 STATIC_PTR int FDECL(CFDECLSPEC vanqsort_cmp, (const genericptr,
                                                const genericptr));
@@ -542,6 +545,9 @@ int how;
     mark_synch(); /* flush buffered screen output */
     buf[0] = '\0';
     killer.format = KILLED_BY_AN;
+#ifdef WEB_GRAPHICS
+    rvip_killer_pm = monsndx(champtr); /* RVIP stage 9: run report killer */
+#endif
     /* "killed by the high priest of Crom" is okay,
        "killed by the high priest" alone isn't */
     if ((mptr->geno & G_UNIQ) != 0 && !(imitator && !mimicker)
@@ -1595,6 +1601,88 @@ int how;
     /*NOTREACHED*/
 }
 
+#ifdef WEB_GRAPHICS
+/* RVIP stage 9: the graveyard/leaderboard run report (roguelikes
+   server/CONTRACT.md).  Called from really_done() once 'how' is final
+   (QUIT on Charon's boat is DIED by then).  score = what topten() records:
+   u.urexp plus the end-of-game bonus really_done() adds a little later
+   (same formula, read-only here; for wins also valuables and artifacts,
+   not the pets' hit points: a win report can be a few points low);
+   killer = the killing monster's own
+   mname when done_in_by() saw one, else killer.name without article.
+   wizard/explore runs never reach the high-score list: nothing sent. */
+int rvip_killer_pm = NON_PM;
+
+STATIC_OVL void
+rvip_run_report(how)
+int how;
+{
+    const char *ev, *k = 0;
+    long score = u.urexp, tmp;
+    int deepest = deepest_lev_reached(FALSE);
+
+    if (wizard || discover) {
+        rvip_killer_pm = NON_PM;
+        return;
+    }
+    ev = (how == ASCENDED) ? "win"
+         : (how == QUIT || how == ESCAPED) ? "quit" : "death";
+    tmp = money_cnt(invent) + hidden_gold() - u.umoney0;
+    if (tmp < 0L)
+        tmp = 0L;
+    if (how < PANICKED)
+        tmp -= tmp / 10L;
+    tmp += 50L * (long) (deepest - 1);
+    if (deepest > 20)
+        tmp += 1000L * (long) ((deepest > 30) ? 10 : deepest - 20);
+    score += tmp;
+    if (how == ASCENDED && u.ualign.type == u.ualignbase[A_ORIGINAL])
+        score += (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL])
+                     ? score : score / 2L;
+    if (how == ESCAPED || how == ASCENDED) {
+        /* the valuables and artifact points really_done() adds after
+           disclosure (same code; u.urexp restored); pets' hit points and
+           Schroedinger's cat come later still and are not counted */
+        struct val_list *val;
+        long save = u.urexp;
+        int i;
+
+        for (val = valuables; val->list; val++)
+            for (i = 0; i < val->size; i++)
+                val->list[i].count = 0L;
+        get_valuables(invent);
+        u.urexp = score;
+        for (val = valuables; val->list; val++)
+            for (i = 0; i < val->size; i++)
+                if (val->list[i].count != 0L)
+                    nowrap_add(u.urexp,
+                               val->list[i].count
+                               * (long) objects[val->list[i].typ].oc_cost
+                               * (long) matprices[val->list[i].mat]
+                               / (long) matprices[objects[val->list[i].typ].oc_material]);
+        artifact_score(invent, TRUE, WIN_ERR);
+        score = u.urexp;
+        u.urexp = save;
+    }
+    if (*ev == 'd') {
+        if (rvip_killer_pm >= LOW_PM && rvip_killer_pm < NUMMONS
+            && strstri(killer.name, mons[rvip_killer_pm].mname))
+            k = mons[rvip_killer_pm].mname;
+        else if (killer.name[0]) {
+            k = killer.name;
+            if (!strncmpi(k, "the ", 4))
+                k += 4;
+            else if (!strncmpi(k, "an ", 3))
+                k += 3;
+            else if (!strncmpi(k, "a ", 2))
+                k += 2;
+        }
+    }
+    web_run_report(ev, plname, k, deepest, score, moves, u.ulevel);
+    rvip_killer_pm = NON_PM;
+}
+#endif
+
 /* separated from done() in order to specify the __noreturn__ attribute */
 STATIC_OVL void
 really_done(how)
@@ -1717,6 +1805,11 @@ int how;
         taken = FALSE; /* lint; assert( !bones_ok ); */
 
     clearlocks();
+#ifdef WEB_GRAPHICS
+    /* RVIP stage 9: report the run now, before disclosure/bones/tombstone
+       wait for keys (a tab closed there must not lose the run) */
+    rvip_run_report(how);
+#endif
 
     if (have_windows)
         display_nhwindow(WIN_MESSAGE, FALSE);

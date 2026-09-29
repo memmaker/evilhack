@@ -1033,6 +1033,9 @@ E int web_menu_key, web_menu_idx;
 E anything web_menu_pick;
 E void FDECL(web_push_key, (int));
 E void FDECL(web_game_over, (int));
+E void FDECL(web_run_report, (const char *, const char *, const char *,
+                             int, long, long, int));
+E int rvip_killer_pm;
 #endif
 E boolean NDECL(overexertion);
 E void NDECL(invocation_message);
