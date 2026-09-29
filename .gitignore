@@ -67,3 +67,12 @@ CLAUDE.md
 dat/md*
 .claude/
 doc/claude/
+# RVIP web port: build products
+/web/dist/
+/web/serve/
+/web/obj/
+/web/tools/
+/web/gen/
+/web/seed/
+/playground/
+/install/
