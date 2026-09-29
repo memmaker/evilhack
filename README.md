@@ -1,6 +1,6 @@
 ## EvilHack in the browser (RVIP port)
 
-Based on EvilHack 0.9.3 · memmaker/evilhack @ c444f6a
+Based on EvilHack 0.9.3 · k21971/EvilHack @ c444f6a
 
 This repository is **EvilHack 0.9.3** by Keith Simpson (k21971), upstream
 [k21971/EvilHack `master` @ `c444f6a`](https://github.com/k21971/EvilHack/tree/c444f6a3ab1e9f16d0676961dba86f628e91c6ba)

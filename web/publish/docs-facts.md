@@ -1,6 +1,6 @@
 # EvilHack: facts for the Docs folder (written in the cloud, no Docs folder there)
 
-- **Version line:** Based on EvilHack 0.9.3 · memmaker/evilhack @ c444f6a
+- **Version line:** Based on EvilHack 0.9.3 · k21971/EvilHack @ c444f6a
 - **Upstream:** k21971/EvilHack `master` @ `c444f6a3ab1e9f16d0676961dba86f628e91c6ba`
   ("Switch status from beta to released", 2026-07-12, EvilHack 0.9.3):
   https://github.com/k21971/EvilHack/tree/c444f6a3ab1e9f16d0676961dba86f628e91c6ba

@@ -213,14 +213,14 @@ on a Mac); use the Enter menu for those commands. Alt+letter commands are also r
 
 
 def about_version():
-    return ('<p><strong>Based on EvilHack 0.9.3 &middot; memmaker/evilhack @ %s</strong> '
+    return ('<p><strong>Based on EvilHack 0.9.3 &middot; k21971/EvilHack @ %s</strong> '
             '(<a href="https://github.com/memmaker/evilhack/compare/%s...main" target="_blank" rel="noopener">the port\'s changes</a>)</p>'
             '<p>This web build is upstream <strong>EvilHack 0.9.3</strong>, commit <code>%s</code> '
             '(<a href="https://github.com/k21971/EvilHack/tree/%s" target="_blank" rel="noopener">k21971/EvilHack at that commit</a>), '
             'with a browser front end added (window port, explore, stair walking, Enter menu, tiles, sound, saving in the browser); '
-            'gameplay is unchanged. The port\'s source will be public at '
-            '<a href="https://github.com/memmaker/evilhack" target="_blank" rel="noopener">github.com/memmaker/evilhack</a> '
-            '(that repository is made public later, after this build).</p>') % (UPSTREAM[:7], UPSTREAM, UPSTREAM, UPSTREAM)
+            'gameplay is unchanged. The port\'s source is public at '
+            '<a href="https://github.com/memmaker/evilhack" target="_blank" rel="noopener">github.com/memmaker/evilhack</a>'
+            '.</p>') % (UPSTREAM[:7], UPSTREAM, UPSTREAM, UPSTREAM)
 
 
 def main():
