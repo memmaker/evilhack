@@ -73,7 +73,6 @@
 			$('btn-tiles').textContent = 'Tiles: ' + (set ? set.name : 'None');
 			document.documentElement.style.setProperty('--tiles', on ? 'url(' + set.src + ')' : 'none');
 			document.documentElement.style.setProperty('--tilecols', perRow);
-			document.documentElement.style.setProperty('--tilerender', set && set.size > 16 ? 'auto' : 'pixelated');
 			renderMapSel();
 		}
 		if (wm) layoutMap();
@@ -87,8 +86,7 @@
 		cv.width = w * dpr; cv.height = h * dpr;
 		cv.style.width = w + 'px'; cv.style.height = h + 'px';
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-		ctx.imageSmoothingEnabled = tilesOn() && set.size > cell;     /* nearest-neighbour unless a big sheet is scaled down */
-		ctx.imageSmoothingQuality = 'high';
+		ctx.imageSmoothingEnabled = false;     /* nearest-neighbour tiles (RVIP rule), also when a big sheet is scaled down */
 	}
 	/* the biggest cell that shows the whole map in its window; never below 16 px with tiles or 12 px in text: a smaller window scrolls */
 	function fit() {
