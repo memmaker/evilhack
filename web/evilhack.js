@@ -7,7 +7,7 @@
  *   Inventory and Equipment (rows with the game's colour, tile and symbol),
  *   Visible (RvipWM.visible lines built in C from the glyphs on the map),
  *   pop-ups (menus, text windows) and the prompt line over the map.
- * Tiles: 'NetHack 3.6' (tiles.png from win/share/*.txt, 16x16), 'Absurdly Evil' (tiles-ae.png, 32x32), or
+ * Tiles: 'NetHack 3.6' (tiles.png from win/share/*.txt, 16x16), 'Absurdly Evil' (tiles-ae.png, 64x64, scaled at run time only), or
  * None = text. Page settings (layout, fonts, tile set, sound) live in
  * <RvipApp.dir>/web-layout.json, the player name in <dir>/web-name, both in
  * IndexedDB (IDBFS) next to the game's own files. Saves: S saves and ends;
@@ -32,7 +32,7 @@
 	var cv, ctx, cell = 32, dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
 	var log = [], prompt = '', wm = null;
 	var LAYOUT = DIR + '/web-layout.json', NAMEF = DIR + '/web-name';
-	var L = { tiles: 'NetHack 3.6', cells: { multi: 0, single: 0 }, wm: null, sound: false, face: '', mapFace: '' };
+	var L = { tiles: 'Absurdly Evil', cells: { multi: 0, single: 0 }, wm: null, sound: false, face: '', mapFace: '' };
 	var shadow = window.nhShadow = { map: [], status: '', inv: '', eq: '', vis: '', pop: '', popTitle: '', popRows: [], popCur: -1,
 		prompt: '', topl: '', msgs: log, hero: null, ended: false, over: null, saves: 0 };
 
@@ -40,7 +40,7 @@
 	function esc(t) { return t.replace(/[&<>]/g, function (c) { return '&' + (c === '&' ? 'amp' : c === '<' ? 'lt' : 'gt') + ';'; }); }
 
 	/* ---------- tile sets: the button cycles these, then None (text) ---------- */
-	var SETS = [{ name: 'NetHack 3.6', src: 'tiles.png', size: 16 }, { name: 'Absurdly Evil', src: 'tiles-ae.png', size: 32 }];
+	var SETS = [{ name: 'Absurdly Evil', src: 'tiles-ae.png', size: 64 }, { name: 'NetHack 3.6', src: 'tiles.png', size: 16 }];
 	var set = null, sheet = null, perRow = 40, loadGen = 0;
 	function tilesOn() { return !!(set && sheet); }
 	/* choose a set by name ('None' or an unknown name = text); a late load after a switch is dropped */
@@ -73,6 +73,7 @@
 			$('btn-tiles').textContent = 'Tiles: ' + (set ? set.name : 'None');
 			document.documentElement.style.setProperty('--tiles', on ? 'url(' + set.src + ')' : 'none');
 			document.documentElement.style.setProperty('--tilecols', perRow);
+			document.documentElement.style.setProperty('--tilerender', set && set.size > 16 ? 'auto' : 'pixelated');
 			renderMapSel();
 		}
 		if (wm) layoutMap();
@@ -86,12 +87,12 @@
 		cv.width = w * dpr; cv.height = h * dpr;
 		cv.style.width = w + 'px'; cv.style.height = h + 'px';
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-		ctx.imageSmoothingEnabled = false;     /* nearest-neighbour tiles */
+		ctx.imageSmoothingEnabled = tilesOn() && set.size > cell;     /* nearest-neighbour unless a big sheet is scaled down */
+		ctx.imageSmoothingQuality = 'high';
 	}
-	/* the biggest cell that shows the whole map in its window; never below the
-	 * tile size (16 px) with tiles or 12 px in text: a smaller window scrolls */
+	/* the biggest cell that shows the whole map in its window; never below 16 px with tiles or 12 px in text: a smaller window scrolls */
 	function fit() {
-		var b = $('map'), lo = tilesOn() ? set.size : 12, best = lo;
+		var b = $('map'), lo = tilesOn() ? Math.min(set.size, 16) : 12, best = lo;
 		for (var c = lo; c <= 64; c++) if (COLNO * c <= b.clientWidth && ROWNO * c <= b.clientHeight) best = c;
 		return best;
 	}
@@ -101,11 +102,11 @@
 		cell = z >= 8 && z <= 64 ? z : fit();
 		measure(); scrollMap(); draw();
 	}
-	/* A−/A+ on the Map title bar: tiles by whole multiples of the tile size, text by 2 px */
+	/* A−/A+ on the Map title bar: tiles by fixed steps (sheets are only ever scaled at run time), text by 2 px */
 	function zoomMap(d) {
 		var s = tilesOn() ? set.size : 0, c = cell;
 		if (s) {
-			var steps = [s / 2, s, 2 * s, 3 * s, 4 * s], i;
+			var steps = s > 16 ? [16, 24, 32, 48, 64] : [8, 16, 32, 48, 64], i;
 			if (d > 0) { for (i = 0; i < steps.length && steps[i] <= c; i++); c = steps[Math.min(i, steps.length - 1)]; }
 			else { for (i = steps.length - 1; i >= 0 && steps[i] >= c; i--); c = steps[Math.max(i, 0)]; }
 		} else c = Math.max(8, Math.min(64, c + 2 * d));
