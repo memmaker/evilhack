@@ -513,6 +513,8 @@ long mask; /* nonzero if resistance status should change by mask */
     }
 
     if (changed) {
+        if (xtime)
+            WEB_SOUND("hallucinate"); /* RVIP sound */
         /* in case we're mimicking an orange (hallucinatory form
            of mimicking gold) update the mimicking's-over message */
         if (!Hallucination)
@@ -2150,6 +2152,8 @@ struct obj *obj;
     int i, ii, isdone, kn = 0;
     boolean cureblind = FALSE;
 
+    WEB_SOUND("shatter"); /* RVIP sound */
+
     /* potion of unholy water might be wielded; prevent
        you_were() -> drop_weapon() from dropping it so that it
        remains in inventory where our caller expects it to be */
@@ -3120,6 +3124,7 @@ long duration;
     }
 
     if (!Very_fast && !Slow) {
+        WEB_SOUND("faster"); /* RVIP sound */
         You("are suddenly moving %sfaster.", Fast ? "" : "much ");
     } else if (!Slow) {
         Your("%s get new energy.", makeplural(body_part(LEG)));

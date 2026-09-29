@@ -1436,6 +1436,7 @@ short learned_otyp; /* pre-selected learned spell, or 0 */
         /* Self-targeting: caster speeds up */
         if (yours) {
             if (!(HFast & INTRINSIC)) {
+                WEB_SOUND("faster"); /* RVIP sound */
                 You("are suddenly moving faster.");
                 HFast |= INTRINSIC;
             }

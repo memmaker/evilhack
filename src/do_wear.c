@@ -1130,8 +1130,10 @@ boolean puton;
         break;
     case BLUE_DRAGON_SCALES:
         if (puton) {
-            if (!Very_fast)
+            if (!Very_fast) {
+                WEB_SOUND("faster"); /* RVIP sound */
                 pline("You speed up%s.", Fast ? " a bit more" : "");
+            }
             EFast |= W_ARM;
         } else {
             EFast &= ~W_ARM;

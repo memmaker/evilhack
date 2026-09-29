@@ -634,7 +634,10 @@ struct obj *sobj;
                      (u.uedibility || Food_sense) ? "continues" : "starts", what);
                 u.uedibility = 1;
             } else
+            {
+                WEB_SOUND("sniff"); /* RVIP sound */
                 Your("%s tingles and you smell %s.", body_part(NOSE), what);
+            }
         } else
             You("sense %s.", what);
         exercise(A_WIS, TRUE);
