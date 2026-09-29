@@ -3,6 +3,15 @@
 Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 `~/Games/rvip-tools/RVIP.md`). Cloud run, repo memmaker/evilhack-cloud.
 
+## Mac session (2026-09-29): finished and live
+- Live: https://ruzzoli.de/roguelikes/evilhack/ (wasm and index md5 equal to web/dist), card, tree entry, shrine, killer art, tiles-ae.png, sound/*.mp3 all 200.
+- Repo split done: public memmaker/evilhack (history filtered from c444f6a only, CLOUD.md/LESSONS.md/web/shots dropped, remote `upstream` = k21971/EvilHack). Version line everywhere: "k21971/EvilHack @ c444f6a".
+- Added: Absurdly Evil tileset (Lemrent), original 64 px PNG, default; scaled only at run time (RVIP rule). Soundpack hooks in src/ (no string matching), 139 of 146 files, mp3, `web/sounds/`. Explore no longer stops on pet swaps. Enter-menu cutoff fixed in shared rvip-wm.js.
+- Shrine screenshots explore.png/menu.png were never committed by the cloud run and are gone; monsters.png regenerated from the AE tiles.
+- Killer art still uses the 16 px NetHack 3.6 tiles.
+- Not done/open: real-Chrome beacon check (#quit + yes), listening to the sounds, in-browser visual checks beyond basics (resize sequence, drag/zoom/rename, Reset windows, one-window mode, shops, Equipment window), player-name prompt (window.prompt returned nothing in the Claude pane), cloud leftovers (item-prompt counts, #name/#call/#force in item menu, explore marks not saved), wizard mode refused in wasm. Sounds without a hook: skrap, scrape_snare.
+- evilhack-cloud is still on GitHub: delete needs the user's confirmation.
+
 ## RVIP progress
 - **Stage 1 (Get + build): done.**
 - **Stage 2 (Explore + stairs + no `--More--`): done.**
