@@ -76,3 +76,5 @@ doc/claude/
 /web/seed/
 /playground/
 /install/
+# RVIP stage 9: committed killer art (the rule above ignores any "evilhack")
+!web/publish/killers/evilhack
