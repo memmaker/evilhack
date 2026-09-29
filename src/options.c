@@ -908,12 +908,71 @@ initoptions_init()
     nmcpy(pl_fruit, OBJ_NAME(objects[SLIME_MOLD]), PL_FSIZ);
 }
 
+#ifdef WEB_GRAPHICS
+/* RVIP web defaults, before the player's own config/EVILHACKOPTIONS (which
+   override them): the upstream .evilhackrc template's colours (menucolors,
+   status highlights), autopickup of gold only, autodescribe.  Interface
+   only: no gameplay option differs from upstream's defaults. */
+STATIC_OVL void
+web_default_options()
+{
+    static const char *const opts[] = {
+        "number_pad:0", "autopickup", "pickup_types:$", "menucolors",
+        "autodescribe", "time", "statushilites:10",
+        "hilite_status:hitpoints/100%/gray&normal",
+        "hilite_status:hitpoints/<100%/green&normal",
+        "hilite_status:hitpoints/<66%/yellow&normal",
+        "hilite_status:hitpoints/<50%/orange&normal",
+        "hilite_status:hitpoints/<33%/red&bold",
+        "hilite_status:hitpoints/<15%/red&inverse",
+        "hilite_status:power/100%/gray&normal",
+        "hilite_status:power/<100%/green&normal",
+        "hilite_status:power/<66%/yellow&normal",
+        "hilite_status:power/<50%/orange&normal",
+        "hilite_status:power/<33%/red&bold",
+        "hilite_status:cap/burdened/yellow/stressed/orange/strained/red&bold/overtaxed/red&inverse/overloaded/red&inverse",
+        "hilite_status:hunger/satiated/yellow/hungry/orange/weak/red&bold/fainting/red&inverse/fainted/red&inverse",
+        "hilite_status:condition/hallu/yellow",
+        "hilite_status:condition/conf/orange",
+        "hilite_status:condition/stun/red&bold",
+        "hilite_status:condition/termill/red&inverse",
+        "hilite_status:condition/foodpois/red&inverse",
+        "hilite_status:condition/slime/red&inverse",
+        "hilite_status:condition/stone/red&inverse",
+        "hilite_status:condition/strngl/red&inverse",
+        "hilite_status:gold/up/yellow/down/brown",
+        "hilite_status:characteristics/up/green/down/red",
+    };
+    static const char *const mc[] = {
+        "\" blessed \" = green", "\" holy \" = green",
+        "\" cursed \" = red", "\" unholy \" = red",
+        "\" cursed .* (being worn)\" = orange&underline",
+    };
+    char buf[BUFSZ];
+    int i;
+
+    config_error_init(FALSE, "web defaults", FALSE);
+    for (i = 0; i < SIZE(opts); i++) {
+        Strcpy(buf, opts[i]);
+        (void) parseoptions(buf, TRUE, FALSE);
+    }
+    for (i = 0; i < SIZE(mc); i++) {
+        Strcpy(buf, mc[i]);
+        (void) add_menu_coloring(buf);
+    }
+    config_error_done();
+}
+#endif
+
 void
 initoptions_finish()
 {
     nhsym sym = 0;
 #ifndef MAC
     char *opts = getenv("EVILHACKOPTIONS");
+#ifdef WEB_GRAPHICS
+    web_default_options();
+#endif
 
     if (!opts)
         opts = getenv("HACKOPTIONS");
