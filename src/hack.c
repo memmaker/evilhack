@@ -2340,6 +2340,8 @@ domove_core()
                     ? "swim underneath"
                     : mtmp->mpeaceful ? "swap places with" : "frighten",
                 pnambuf);
+            if (mtmp->mpeaceful)
+                rvip_msgs--; /* RVIP: swapping with a pet does not stop explore */
 
             /* snapshot the species index up front; the drowned-or-died
                case below records the abuse event after the pet is dead */
