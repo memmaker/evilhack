@@ -15,14 +15,83 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
   roguelikes-index (card, tree `<li>`, years.json, 41→42), og.py for the index
   page, commit+push+deploy both repos, check live, pane check, repo split
   (unshallow first; filter CLOUD.md/LESSONS.md).
-- **Stage 8 (Shrine): done as far as the cloud allows.** Next: stage 9.
+- **Stage 8 (Shrine): done as far as the cloud allows.**
   **Left for the Mac:** `cp -r web/publish/shrine/evilhack.html
   web/publish/shrine/evilhack` into roguelikes-index `shrine/`, apply the
   (regenerated) patch, `./order.py`, commit+push both repos, both `deploy.sh`,
   check live: card Info, tree ✦, game title link (all → `shrine/evilhack.html`).
+- **Stage 9 (Graveyard and leaderboard): done as far as the cloud allows.**
+  All 9 stages done in the cloud. **Left for the Mac:** `web/publish/APPLY.md`
+  §5 (apply `killers-make.patch`, `make.py evilhack` or copy
+  `web/publish/killers/evilhack/`, commit+push+deploy both repos, real-browser
+  `#quit` → beacon 204 → graveyard).
+
+### Consolidated Mac list (all stages; details in `web/publish/APPLY.md`)
+1. roguelikes-index: card.png → `img/evilhack.png`, shrine page + folder,
+   `roguelikes-index.patch` (card, tree, years.json, count), `order.py`,
+   og.py, killer art (§5), commit+push, `deploy.sh`.
+2. evilhack: `web/build.sh` + `web/deploy.sh`; check live page, wasm md5,
+   og:image, shrine links, killers PNG 200, a real `#quit` beacon 204.
+3. Browser-pane visual check owed since stage 1 (tiles, windows, help, sound
+   heard once).
+4. Repo split (unshallow first; filter CLOUD.md/LESSONS.md), public
+   memmaker/evilhack, `git remote add upstream`; merge LESSONS.md into RVIP.md;
+   delete the cloud repo/branch.
+
 - Live URL (after deploy): https://ruzzoli.de/roguelikes/evilhack/ — **ready to
   deploy** (`web/build.sh`, then `web/deploy.sh` from the Mac; not run: no ssh).
   **Mac pane check still owed** (stages 1-5 only seen headless).
+
+### Stage 9 facts
+- **Hook:** `rvip_run_report(how)` in `src/end.c`, called in `really_done()`
+  right after `clearlocks()` (after paybill/`fixup_death`, so `how` is final:
+  QUIT on Charon's boat is DIED by then) and **before** disclosure, bones,
+  dumplog and tombstone (all can wait for keys). `web_game_over(how)` (overlay
+  hook) stays at the top; the report is written by `RvipWM.report` into its
+  own IndexedDB (`rvip-outbox`), independent of IDBFS sync / EXIT_RUNTIME
+  (the runtime lives on through the disclosure prompts). C → JS:
+  `web_run_report()` → `js_beacon` (EM_JS, win/web/winweb.c), values URL-
+  encoded, empty/negative omitted, `try{}catch{}`; test hook `window.nhBeacon`.
+- **Fields:** `g=evilhack`, `ev` (ASCENDED → win; QUIT, ESCAPED → quit;
+  every other end incl. PANICKED/TRICKED → death), `name` = `plname` (the page
+  prompt name via `-u`), `killer` (deaths only) = `mons[pm].mname` of the monster
+  `done_in_by()` saw (global `rvip_killer_pm`, `monsndx(champtr)` = the real
+  monster, not its disguise; used only if `killer.name` contains that mname,
+  so a life-saved earlier killer never leaks), else `killer.name` with a
+  leading the/a/an stripped (starvation, poison, "quit while already on
+  Charon's boat"…); `depth` = `deepest_lev_reached(FALSE)` (the value the
+  score formula uses; the list's `maxlvl`); `score` = what topten records:
+  u.urexp + really_done's end bonus (gold gain −10 %, depth), ×2/×1.5 for
+  an aligned ascension, plus valuables and artifact points for wins/escapes
+  (same code, u.urexp restored); `turns` = `moves`; `lvl` = `u.ulevel`.
+- **Not sent:** save-and-quit (never reaches really_done), wizard and explore
+  runs (never on the high-score list). **Known gap:** a win's pets' HP and
+  Schrödinger's cat are added by the game after the disclosure prompts, so a
+  win report can be a few points below the list (sending early wins over
+  exactness: a win is never lost).
+- **Tests** (scratchpad `s9/t9.cjs`, Playwright, `/roguelikes/beacon` routed
+  503 then 204): quit via `#quit`+`yes` (resent by **reload**), death by a
+  jackal, death by starvation, **ascension** (resent by `RvipWM.flush()`).
+  Each: report already in the outbox at the first disclosure prompt; exactly
+  one URL with `&id=…&at=…` while blocked; g/ev/name/killer/depth/turns/lvl
+  right; score equal to the xlogfile `points` (1234 death, 19468 win with 2
+  rubies + Excalibur, pets removed); after unblock sent once (204), outbox
+  empty; no page errors besides the intended 503s. **Win path reached**:
+  temporary patch (reverted, rebuilt) in `web_nh_poskey`: key `Z` with a
+  player name `win*` → `done(ASCENDED)` (`die*` → `done_in_by(jackal)`,
+  `sta*` → starvation); wizard mode is refused in wasm. The Playwright user
+  agent is filtered server-side; tests never reach the live board. After the
+  revert: clean rebuild, quit case and shared `smoke.cjs` clean, native
+  `end.o` compiles.
+- **Killer art:** `web/publish/killers-make.py` (stdlib PNG reader/writer):
+  `glyph2tile[PM]` from `web/gen/src/tile.c` (PM 0..NUMMONS-1 = 563), name at
+  that tile in `win/share/monsters.txt`, crop from `web/dist/tiles.png`, 2×
+  nearest → 559 PNGs in `web/publish/killers/evilhack/` (4 names shared by
+  two forms: werejackal, wererat, werewolf, weredemon; first kept). Slugs e.g.
+  `tal-gath`, `oracle`. `.gitignore` negation `!web/publish/killers/evilhack`
+  (the `evilhack` binary rule hid it). make.py entry `evilhack()`:
+  `web/publish/killers-make.patch` (+ `killers-make-snippet.py`), run in a
+  scratch copy with a fake `~/Games` → same 559, pixel-identical.
 
 ### Stage 8 facts
 - Page `web/publish/shrine/evilhack.html` (template rogue54.html, only
@@ -154,7 +223,7 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
   file, else the level files as a JSON bundle; Import takes both. S → overlay
   → Play again restores. Death/quit → `web_game_over(how)` (src/end.c
   `really_done`) → `Module.nh.over(how)` (**stage 9 hooks ev=win here**,
-  ASCENDED) → sync → overlay → reload = new game, same name.
+  ASCENDED; stage 9 did it in `rvip_run_report` instead) → sync → overlay → reload = new game, same name.
   `beforeunload` warns while running.
 - Help: `web/make-help.py` basic stub (keys, saving, windows) → help.html;
   real guide in stage 6.
