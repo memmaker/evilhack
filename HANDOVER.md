@@ -6,7 +6,74 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 ## RVIP progress
 - **Stage 1 (Get + build): done.**
 - **Stage 2 (Explore + stairs + no `--More--`): done.**
-- **Stage 3 (Enter menu + inventory): done.** Next: **stage 4** (tiles).
+- **Stage 3 (Enter menu + inventory): done.**
+- **Stage 4 (Tiles): done.** Next: **stage 5** (rvip-wm page and windows).
+
+### Stage 4 facts
+- **Set:** EvilHack's own NetHack 3.6 16x16 set, `win/share/{monsters,
+  objects,other}.txt` (the only set offered; then None = text). Upstream
+  already keeps the txt files in step with monst.c/objects.c (568 + 566 +
+  273 tiles; `util/tile2bmp` checks each name, exit 101 on mismatch), so
+  every glyph (9240) has a tile; no stand-in file needed.
+- **Coverage vs NetHack 3.6** (pixels compared by name against
+  NetHack/NetHack `NetHack-3.6` win/share, script `scratchpad/s4/cov.py`):
+  monsters 437/568 own art (377 same, 5 redrawn, 55 new) = 77 %, 131 are
+  same-set copies (e.g. mountain dwarf = dwarf, skeletal horse, gnoll group
+  share one new tile); objects 436/566 = 77 % (130 copies: dark elven/
+  orcish variants, staffs, new rings/potions/spellbooks reuse a vanilla
+  appearance of the same class); other 248/273 = 91 % (25 copies: acid and
+  shock explosions, zap 9, bolt/spear/magic beam traps). Overall 1121/1407
+  = 80 % distinct art, **100 % with same-set stand-ins** (RVIP 5.8: one set,
+  never mixed). Other sets checked: slashem 16x16 names cover 780/1129
+  EvilHack monsters+objects, its 32x32 sets 68: not used; nethack50 is the
+  3.7 set (gendered tiles): not used; dynahack has no tile set.
+- **Sheet (build time, `web/build.sh`):** native `tilemap` built with
+  `-DSTATUES_LOOK_LIKE_MONSTERS=` and the web DEFS → `web/gen/src/tile.c`
+  (replaces `src/tile.c` in the web game); native `util/tile2bmp` →
+  `web/gen/nhtiles.bmp` (monsters, objects, other incl. `sub` wall sets,
+  then grey monsters for statues); `web/mktiles.py` (stdlib only) → PNG
+  `tiles.png` 640x800, 16x16 cells, 40 per row, backdrop (71,108,108) →
+  black, asserts every glyph2tile/substitute entry < `total_tiles_used`.
+- **Game side:** `include/global.h` sets `USE_TILES` for `WEB_GRAPHICS`
+  (`shuffle_tiles()` in o_init.c/restore: random appearances map by
+  appearance; `substitute_tiles()` for mines/gehennom/knox/sokoban walls).
+  winweb.c already sends `glyph2tile[glyph]` per map cell (`js_map`) and per
+  menu/inventory row (first tab field; `add_menu` glyph from
+  `obj_to_glyph`). Statues = grey monster tile, corpses = corpse tile,
+  figurines = figurine tile, hero = role tile.
+- **Page (`web/evilhack.js`, stage-1 page):** `SETS = [{name:'NetHack
+  3.6', src:'tiles.png', size:16}]`; `useTiles(name)` loads the sheet with
+  a generation counter (late `onload` after a switch/None is dropped) and
+  calls `setup()` (cell size, canvas size, which map shows, redraw map,
+  inventory, pop-up). Tiles button cycles sets then None. Zoom −/+ = whole
+  multiples 1..4 (default 2 = 32 px cells, square because the tiles are
+  16x16), `imageSmoothingEnabled=false`, `image-rendering: pixelated`.
+  Prefs `{tiles, zoom}` in `/evilhack/web-layout.json` (IDBFS, synced),
+  read in preRun right after `syncfs` before the sheet loads. Row icons:
+  `<span class="ti" data-t=tile>` from the sheet at 16 px. Test hooks:
+  `nhShadow.tiles`, `nhShadow.sheet`, `nhShadow.cells`, `window.nhTiles`.
+  Stage 5: move `SETS`/`useTiles`/`setup` and the layout file into the
+  rvip-wm page (A−/A+ per window instead of the zoom buttons).
+- **Fixed a stage-1 bug:** the web build used native `pm.h`/`onames.h`
+  (MAIL) with monst.c/objects.c compiled `-DNOMAIL`: every monster after
+  the mail daemon and object after the scroll of mail was one off (gold
+  showed as `*`). `build.sh` now makes both headers with the web makedefs
+  and compiles against a copy of `include/` in `web/gen/include`.
+- **Tests:** `scratchpad/s4/s4.cjs` (0 fails; needs a temporary wizard
+  unlock, see below): default set before the first prompt, canvas 80x21
+  cells at 32 px, hero tile = priest(ess), wished statue = grey newt,
+  figurine, corpse, ring and potion tiles = the appearance in the message
+  (`copper / shock resistance` for "a copper ring"), inventory rows'
+  tiles vs appearance for wands/rings/spellbooks, walls/corridors/doors
+  after ^F, zoom, late-onload guard, button → None → reload keeps None →
+  back to tiles → reload keeps tiles; crops read at 2x (`crop-items.png`,
+  `inv.png`, `page-tiles.png`). Wizard mode in wasm fails (`get_unix_pw()`
+  is NULL): the test build patched `authorize_wizard_mode()` with
+  `getenv("RVIP_TESTWIZ")` temporarily (reverted, rebuilt). Stage-3
+  `s3.cjs` and stage-1 `play.cjs` still pass.
+- Open: not checked in the Mac pane (look of 32 px cells, row icons);
+  the gnome-king-style heavy statue wish drops a statue that showed as a
+  boulder before the header fix (now fine). No DawnLike/other set offered.
 
 ### Stage 3 facts
 - Files: `src/cmd.c` (end: `rvip_cmdmenu`, `rvip_cmd_key`, `rvip_extkey`,
@@ -198,8 +265,8 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
   alignment filtered by `ok_*` from role.c), not tty's full selection menu.
 - Web defaults (number_pad off, autopickup `$`, pickup_types, hilite_status,
   menucolors) not baked yet; `web/sysconf` carries no OPTIONS.
-- No tiles sheet yet (tile indexes already sent; stage 4). Saves/IDBFS
-  recovery and `ev=win` not wired (stages 5/9).
+- Tiles done in stage 4. Saves/IDBFS recovery and `ev=win` not wired
+  (stages 5/9).
 - Deploy: not possible from the cloud (no `web/deploy.sh` yet).
 
 ## Playwright (local copy)
