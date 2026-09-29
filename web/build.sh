@@ -110,7 +110,6 @@ for s in $(grep -h 'WEB_SOUND(' src/*.c win/web/winweb.c | grep -o '"[a-z0-9_]*"
 done
 # text fonts: the index page's fonts/*.woff (served at ../fonts/ next to the games); [] if not here
 (cd "$ROGUELIKES/fonts" 2>/dev/null && ls *.woff 2>/dev/null | sed 's/\.woff$//') \
-	| python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))' > "$OUT/fonts.json"
 # serve tree as on the server: dist + shared ../rvip-*.js + ../fonts (gitignored)
 rm -rf web/serve && mkdir -p web/serve
 ln -s ../dist web/serve/evilhack
