@@ -7,14 +7,15 @@ below needs ssh, the shared index repo or GitHub repo admin.
 
     cd ~/Games/roguelikes-index && git pull
     cp <evilhack>/web/publish/card.png img/evilhack.png
-    patch -p1 < <evilhack>/web/publish/roguelikes-index.patch   # card, tree <li>, years.json, 41 -> 42
+    cp -r <evilhack>/web/publish/shrine/evilhack.html <evilhack>/web/publish/shrine/evilhack shrine/   # stage 8 shrine
+    patch -p1 < <evilhack>/web/publish/roguelikes-index.patch   # card (+Info), tree <li> (+✦), years.json, 41 -> 42
     ./order.py --fix && ./order.py                              # must be silent / OK
 
 If the patch does not apply (index changed since), apply by hand:
 `web/publish/card.html` after the last 2016-2018 card, `web/publish/tree.html`
 as a child of NetHack right before the NetHack 5.0 `<li>`, the years.json entry
-from the patch, bump "N classic roguelikes". No Info button until the shrine
-(stage 8) exists.
+from the patch, bump "N classic roguelikes". Both snippets already carry the shrine links (card Info button, tree ✦); the
+game page's `#bar h1` links to `../shrine/evilhack.html` since stage 5.
 
 ## 2. og tags
 
@@ -26,8 +27,9 @@ EvilHack block, keep one block only.
 
 ## 3. Commit, push, deploy, check
 
-    cd ~/Games/roguelikes-index && git add img/evilhack.png index.html years.json && git commit -m "Add EvilHack card and tree entry" && git push && ./deploy.sh
+    cd ~/Games/roguelikes-index && git add img/evilhack.png index.html years.json shrine/evilhack.html shrine/evilhack && git commit -m "Add EvilHack card and tree entry" && git push && ./deploy.sh
     curl -s https://ruzzoli.de/roguelikes/ | diff - index.html
+    curl -sI https://ruzzoli.de/roguelikes/shrine/evilhack.html | head -1     # 200; then click Info, ✦ and the game's EvilHack title
     cd <evilhack> && RVIP_WEB=~/Games/rvip-tools/web sh web/build.sh && sh web/deploy.sh
     curl -s https://ruzzoli.de/roguelikes/evilhack/ | grep og:image
     curl -s https://ruzzoli.de/roguelikes/evilhack/evilhack-core.wasm | md5; md5 web/dist/evilhack-core.wasm
