@@ -4,7 +4,53 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 `~/Games/rvip-tools/RVIP.md`). Cloud run, repo memmaker/evilhack-cloud.
 
 ## RVIP progress
-- **Stage 1 (Get + build): done.** Next: **stage 2** (explore + stairs + no `--More--`).
+- **Stage 1 (Get + build): done.**
+- **Stage 2 (Explore + stairs + no `--More--`): done.** Next: **stage 3**
+  (Enter menu + inventory).
+
+### Stage 2 facts
+- Explore key **`~`** (`#autoexplore`, `src/cmd.c` extcmdlist): free in the
+  command table, vi and number_pad sets, getpos keys. Code at the end of
+  `src/hack.c` (`rvip_*`, `doexplore`); decls in `include/extern.h`.
+- Main-loop hook: `src/allmain.c` moveloop `else if (multi == 0)`:
+  `if (!rvip_continue()) rhack(0);` — one step per turn, `flush_screen(1)`
+  then `web_walk_pause()` (winweb.c: redraw, 40 ms sleep, any queued key
+  stops the walk and is swallowed).
+- Known grid: `levl[x][y].seenv` + remembered glyph (`levl[][].glyph`),
+  stairs also via `lastseentyp` (stairs covered by an object in memory);
+  `test_move(TEST_TRAV)` only between seen squares. Frontier = passable, next
+  to unseen, not stood on; remembered objects not stood on are targets; the
+  target is kept until stood on. Per-level marks (stood / locked door) in
+  `rvip_mark[ledger][x][y]` (not saved: a restored game re-walks some cells).
+- Stops: new message (`rvip_msgs++` in `src/pline.c` before `putmesg`,
+  snapshot before each step, re-baselined after explore's own door open),
+  visible hostile ("In view: the jackal."), key, step that did not move,
+  held/engulfed. Avoids known traps, water/lava, boulders, visible non-pets.
+  Closed doors: `doopen_indir()`; locked (`D_LOCKED`) never opened (EvilHack
+  `autounlock` would pick it): "This door is locked.", marked, skipped.
+  No goal left: "Known traps, water or locked doors block the way…" if a
+  loose BFS finds one, else "Nothing left to explore here (secret doors may
+  need searching)."
+- `<`/`>` (`src/do.c` top of `doup`/`dodown`): off the right stairs →
+  `rvip_start()` walks to nearest known stairs/ladder/branch stairs of that
+  kind and stops; second press takes. Never trapdoors/holes/portals (not
+  stairs). Skipped when levitating, held, in a pit (`<`), in water, or on a
+  known trap (`>` keeps falling through). Stair walks stop on messages and
+  only when *more* hostiles are in view than at the start.
+- No `--More--`: the web window port never waits on the message window
+  (`display_nhwindow(WIN_MESSAGE)` = redraw; no `xwaitforspace`); birth has no
+  stops (tested). Text pop-ups (intro, `i`) still wait for a key: those are
+  windows, not `--More--`. No option needed.
+- Help: `dat/help`, `dat/hh`, `dat/cmdhelp`.
+- Tests: Playwright (`scratchpad/pw/s2.cjs`): explore stops on monsters,
+  pet swaps, pickups; key queued mid-walk stops it; `>` from off-stairs walks,
+  stops on arrival, second press descends; `<` likewise; no `More` during
+  birth. Native wizard pty (`scratchpad/s2/drive.py`, pyte): Dlvl 1–2 fully
+  explored to "Nothing left…", descended by `>` walks; locked doors,
+  hidden door found, door resists/opens without stopping.
+- Open: pet messages ("You swap places with your kitten") stop explore
+  (by the any-message rule); shop items are all targets (each stops with
+  "You see here"); a hidden trap can still be walked into (unknown).
 - Folder: `/home/user/evilhack-cloud` (cloud); web name `evilhack`.
 - Upstream: k21971/EvilHack branch `master` @ `c444f6a3ab1e9f16d0676961dba86f628e91c6ba`
   (commit 1 of this repo, full history). There is **no `upstream` remote** in
