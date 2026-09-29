@@ -542,6 +542,7 @@ int how;
     You((how == STONING) ? "turn to stone..."
         : (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)) ? "have been destroyed..."
         : "die...");
+    WEB_SOUND("calm_death"); /* RVIP sound */
     mark_synch(); /* flush buffered screen output */
     buf[0] = '\0';
     killer.format = KILLED_BY_AN;
@@ -1161,6 +1162,7 @@ int how;
        multi and nomovemsg below, but afternmv would survive and fire
        with a potentially-NULL armor slot when multi reaches zero */
     cancel_don();
+    WEB_SOUND("shimmer"); /* RVIP sound */
     nomovemsg = (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))
                 ? "You survived that attempt to destroy you."
                 : "You survived that attempt on your life.";

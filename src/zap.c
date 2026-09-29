@@ -5790,6 +5790,10 @@ boolean say; /* Announce out of sight hit/miss events if true */
     spell_type = is_hero_spell(type) ? SPE_MAGIC_MISSILE + abstype : 0;
 
     fltxt = flash_types[(type <= -33) ? abstype : abs(type)];
+    if (abstype == ZT_MAGIC_MISSILE)
+        WEB_SOUND("missile"); /* RVIP sound */
+    else if (abstype == ZT_LIGHTNING)
+        WEB_SOUND("lightning"); /* RVIP sound */
     if (u.uswallow) {
         int tmp;
 
@@ -6069,8 +6073,10 @@ boolean say; /* Announce out of sight hit/miss events if true */
                     if (isok(sx, sy) && IS_STWALL(levl[sx][sy].typ))
                         pline("%s splashes against the wall!", The(fltxt));
                     break;
-                } else
+                } else {
+                    WEB_SOUND("bounces"); /* RVIP sound */
                     pline_The("%s bounces!", fltxt);
+                }
             }
             if (!dx || !dy || !rn2(bchance)) {
                 dx = -dx;
@@ -7430,8 +7436,10 @@ boolean eight_ball;
 
     promptbuf[0] = '\0';
     nothing = zeroobj; /* lint suppression; only its address matters */
-    if (flags.verbose)
+    if (flags.verbose) {
+        WEB_SOUND("wish"); /* RVIP sound */
         You("may wish for an object.");
+    }
  retry:
     Strcpy(promptbuf, "For what do you wish");
     if (iflags.cmdassist && tries > 0)

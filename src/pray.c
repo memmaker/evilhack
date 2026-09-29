@@ -736,6 +736,7 @@ aligntyp resp_god;
     else if (maxanger > 15)
         maxanger = 15; /* be reasonable */
 
+    WEB_SOUND("black"); /* RVIP sound */
     switch (rn2(maxanger)) {
     case 0:
     case 1:
@@ -2317,6 +2318,7 @@ dosacrifice()
                 display_nhwindow(WIN_MESSAGE, FALSE);
                 verbalize(
           "In return for thy service, I grant thee the gift of Immortality!");
+                WEB_SOUND("ascension"); /* RVIP sound */
                 You("ascend to the status of Demigod%s...",
                     flags.female ? "dess" : "");
                 done(ASCENDED);
