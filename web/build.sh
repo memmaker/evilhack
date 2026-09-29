@@ -1,6 +1,7 @@
 #!/bin/sh
 # Build EvilHack for the browser (Emscripten + Asyncify) into web/dist.
-# win/web/winweb.c is the window port, web/evilhack.js draws.
+# win/web/winweb.c is the window port, web/evilhack.js draws, the shared
+# rvip-wm.js places the windows. Serve web/serve/ (evilhack/ = dist).
 # Needs the native build first (generated headers pm.h/onames.h/date.h,
 # util/tilemap -> src/tile.c, dat/ text data): see HANDOVER.md.
 # Data tools (makedefs, lev_comp, dgn_comp, dlb) are rebuilt with emcc and
@@ -10,6 +11,7 @@
 set -e
 cd "$(dirname "$0")/.."
 RVIP_WEB=${RVIP_WEB:-$HOME/Games/rvip-tools/web}
+ROGUELIKES=${ROGUELIKES:-$HOME/Games/roguelikes-index}   # fonts/ of the index page
 OUT=web/dist SEED=web/seed TOOLS=web/tools OBJ=web/obj
 [ -f include/pm.h ] && [ -f include/date.h ] && [ -f src/tile.c ] \
 	|| { echo "build natively first (see HANDOVER.md)"; exit 1; }
@@ -98,8 +100,13 @@ emcc -O2 $WARN "$OBJ"/*.o --preload-file "$SEED/fs@/seed" -o "$OUT/evilhack-core
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
 cp web/index.html web/evilhack.js "$GEN/tiles.png" "$OUT/"
-# serve tree as on the server: dist + shared ../rvip-*.js (gitignored)
+python3 web/make-help.py > "$OUT/help.html"
+# text fonts: the index page's fonts/*.woff (served at ../fonts/ next to the games); [] if not here
+(cd "$ROGUELIKES/fonts" 2>/dev/null && ls *.woff 2>/dev/null | sed 's/\.woff$//') \
+	| python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))' > "$OUT/fonts.json"
+# serve tree as on the server: dist + shared ../rvip-*.js + ../fonts (gitignored)
 rm -rf web/serve && mkdir -p web/serve
 ln -s ../dist web/serve/evilhack
 for f in "$RVIP_WEB"/rvip-*.js; do [ -f "$f" ] && ln -s "$f" web/serve/; done
+[ -d "$ROGUELIKES/fonts" ] && ln -s "$ROGUELIKES/fonts" web/serve/fonts
 ls -la "$OUT"
