@@ -1200,6 +1200,7 @@ int oldlevel, newlevel;
                     && (!(*(abil->ability) & HAVEPARTIAL & ~mask)
                         || (*(abil->ability) & TIMEOUT) < 100)
                     && verbose) {
+                    if (*(abil->gainstr)) WEB_SOUND("intrinsinc"); /* RVIP sound */
                     if (*(abil->gainstr))
                         You_feel("%s!", abil->gainstr);
                 }

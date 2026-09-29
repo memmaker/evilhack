@@ -5139,7 +5139,7 @@ int xkill_flags; /* XKILL_GIVEMSG, XKILL_NOMSG, XKILL_NOCORPSE,
                         && sgn(u.ualign.type) == sgn(mtmp->data->maligntyp));
     boolean orb = (mtmp->data->mlet == S_ORB);
 
-    WEB_SOUND("kill"); /* RVIP sound */
+    WEB_SOUND("hit2"); /* RVIP sound */
     mtmp->mhp = 0; /* caller will usually have already done this */
     if (!noconduct) { /* KMH, conduct */
         if (!u.uconduct.killer++)

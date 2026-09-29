@@ -2360,6 +2360,7 @@ boolean confused, helmet_protects, byu, skip_uswallow;
                 } else {
                     if (dmg > 2)
                         dmg = 2;
+                    WEB_SOUND("bonk"); /* RVIP sound */
                     pline("Fortunately, you are wearing a hard helmet.");
                 }
             } else if (flags.verbose) {

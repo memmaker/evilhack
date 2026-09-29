@@ -1032,6 +1032,7 @@ int x, y;
             break;
         }
         pline("This door%s.", mesg);
+        if (locked) WEB_SOUND("lock"); /* RVIP sound */
         if (locked && flags.autounlock && (unlocktool = autokey(TRUE)) != 0) {
             res = pick_lock(unlocktool, cc.x, cc.y, (struct obj *) 0);
         }
@@ -1058,11 +1059,12 @@ int x, y;
             b_trapped("door", FINGER, door_material(door), cc.x, cc.y);
         } else
             door->doormask = D_ISOPEN;
-        WEB_SOUND("door_open"); /* RVIP sound */
+        WEB_SOUND("door2"); /* RVIP sound */
         feel_newsym(cc.x, cc.y); /* the hero knows she opened it */
         unblock_point(cc.x, cc.y); /* vision: new see through there */
     } else {
         exercise(A_STR, TRUE);
+        WEB_SOUND("door1"); /* RVIP sound */
         pline_The("door resists!");
     }
 
@@ -1201,11 +1203,12 @@ doclose()
             || rn2(25) < (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
             pline_The("door closes.");
             door->doormask = D_CLOSED;
-            WEB_SOUND("door_close"); /* RVIP sound */
+            WEB_SOUND("door3"); /* RVIP sound */
             feel_newsym(x, y); /* the hero knows she closed it */
             block_point(x, y); /* vision:  no longer see there */
         } else {
             exercise(A_STR, TRUE);
+            WEB_SOUND("door1"); /* RVIP sound */
             pline_The("door resists!");
         }
     }
@@ -1225,6 +1228,7 @@ struct obj *obj, *otmp; /* obj *is* a box */
     case WAN_LOCKING:
     case SPE_WIZARD_LOCK:
         if (!obj->olocked) { /* lock it; fix if broken */
+            WEB_SOUND("metal"); /* RVIP sound */
             pline("Klunk!");
             obj->olocked = 1;
             obj->obroken = 0;
@@ -1389,6 +1393,7 @@ int x, y;
                     if (MON_AT(x, y))
                         (void) mb_trapped(m_at(x, y), FALSE);
                     else if (flags.verbose) {
+                        WEB_SOUND("kaboom"); /* RVIP sound */
                         if (cansee(x, y))
                             pline("KABOOM!!  You see a door explode.");
                         else
@@ -1401,6 +1406,7 @@ int x, y;
                 }
                 break;
             }
+            WEB_SOUND("crack"); /* RVIP sound */
             door->doormask = D_BROKEN;
             if (flags.verbose) {
                 if (cansee(x, y))
@@ -1458,6 +1464,7 @@ int x, y;
             if (MON_AT(x, y))
                 (void) mb_trapped(m_at(x, y), FALSE);
             else if (flags.verbose) {
+                WEB_SOUND("kaboom"); /* RVIP sound */
                 if (cansee(x, y))
                     pline("KABOOM!!  You see a door explode.");
                 else

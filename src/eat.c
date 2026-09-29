@@ -1103,6 +1103,7 @@ struct permonst *ptr;
         adj = "slightly";
     }
 
+    WEB_SOUND("intrinsinc"); /* RVIP sound */
     switch (type) {
     /* All these use the new system, which is based on corpse weight. */
     case FIRE_RES:
@@ -2249,7 +2250,7 @@ boolean already_partly_eaten;
 {
     const char *old_nomovemsg, *save_nomovemsg;
 
-    WEB_SOUND("eat"); /* RVIP sound */
+    WEB_SOUND("munch"); /* RVIP sound */
     debugpline2("start_eating: %s (victual = %s)",
                 /* note: fmt_ptr() returns a static buffer but supports
                    several such so we don't need to copy the first result
@@ -4109,7 +4110,7 @@ boolean incr;
             break;
         }
         if (newhs >= HUNGRY && newhs > u.uhs)
-            WEB_SOUND("hunger"); /* RVIP sound */
+            WEB_SOUND(flags.female ? "hunger_f" : "hunger_m"); /* RVIP sound */
         u.uhs = newhs;
         context.botl = 1;
         bot();

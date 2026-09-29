@@ -2543,6 +2543,7 @@ invocation_message()
         else
             Sprintf(buf, "under your %s", makeplural(body_part(FOOT)));
 
+        WEB_SOUND("vibrating_square"); /* RVIP sound */
         You_feel("a strange vibration %s.", buf);
         u.uachieve.vibrating_square = 1;
         if (otmp && otmp->spe == 7 && otmp->lamplit)
@@ -3710,6 +3711,7 @@ maybe_wail()
                   who);
         }
     } else {
+        WEB_SOUND("howling"); /* RVIP sound */
         You_hear(u.uhp == 1 ? "the wailing of the Banshee..."
                             : "the howling of the CwnAnnwn...");
     }
@@ -4295,6 +4297,7 @@ rvip_step()
     if (IS_DOOR(door->typ) && (door->doormask & D_LOCKED)
         && (c == S_vcdoor || c == S_hcdoor)) {
         *rvip_cell(nx, ny) |= RVIP_LOCKED;
+        WEB_SOUND("lock"); /* RVIP sound */
         pline("This door is locked.");
         return -1;
     }

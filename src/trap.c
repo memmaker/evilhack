@@ -709,6 +709,7 @@ unsigned ftflags;
         t = t_at(u.ux, u.uy);
         feeltrap(t);
         if (!Sokoban && !(ftflags & TOOKPLUNGE)) {
+            WEB_SOUND("body_fall"); /* RVIP sound */
             if (t->ttyp == TRAPDOOR)
                 pline("A trap door opens up under you!");
             else
@@ -1252,6 +1253,7 @@ unsigned trflags;
         extract_nobj(otmp, &trap->ammo);
         seetrap(trap);
         pline("%s shoots out at you!", An(xname(otmp)));
+        WEB_SOUND(ttype == DART_TRAP_SET ? "dart" : "arrow"); /* RVIP sound */
 
         oldumort = u.umortality;
         {
@@ -1330,6 +1332,7 @@ unsigned trflags;
                   the(ceiling(u.ux, u.uy)), an(xname(otmp)), body_part(HEAD));
             if (uarmh) {
                 if (is_hard(uarmh)) {
+                    WEB_SOUND("bonk"); /* RVIP sound */
                     pline("Fortunately, you are wearing a hard helmet.");
                     dmg = 2;
                 } else if (flags.verbose) {
@@ -1357,6 +1360,7 @@ unsigned trflags;
             }
         } else {
             seetrap(trap);
+            WEB_SOUND("board_squeak"); /* RVIP sound */
             pline("A board beneath you %s%s%s.",
                   Deaf ? "vibrates" : "squeaks ",
                   Deaf ? "" : trapnote(trap, 0), Deaf ? "" : " loudly");
@@ -1381,6 +1385,7 @@ unsigned trflags;
                   A_Your[trap->madeby_u]);
             break;
         }
+        WEB_SOUND("beartrap"); /* RVIP sound */
         set_utrap((unsigned) rn1(4, 4), TT_BEARTRAP);
         if (u.usteed) {
             pline("%s bear trap closes on %s %s!", A_Your[trap->madeby_u],
@@ -1407,6 +1412,7 @@ unsigned trflags;
             monstseesu(M_SEEN_SLEEP);
             You("are enveloped in a cloud of gas!");
         } else {
+            WEB_SOUND("yawn"); /* RVIP sound */
             pline("A cloud of gas puts you to sleep!");
             fall_asleep(-resist_reduce(rnd(25), SLEEP_RES), TRUE);
         }
@@ -1421,6 +1427,7 @@ unsigned trflags;
          * first rustable one or the body, we take whatever we get,
          * even if it is not rustable.
          */
+        WEB_SOUND("gush"); /* RVIP sound */
         switch (rn2(5)) {
         case 0:
             pline("%s you on the %s!", A_gush_of_water_hits, body_part(HEAD));
@@ -2117,6 +2124,7 @@ struct trap *trap;
     struct rm *lev = &levl[x][y];
     schar old_typ, typ;
 
+    WEB_SOUND("kaboom"); /* RVIP sound */
     old_typ = lev->typ;
     set_trap_ammo(trap, (struct obj *) 0); /* useup the land mine obj */
     (void) scatter(x, y, 4,
@@ -4814,6 +4822,7 @@ drown()
     }
 
     if (!u.uinwater) {
+        WEB_SOUND("dive"); /* RVIP sound */
         You("%s into the %s%c",
             (Is_waterlevel(&u.uz)
              ? "plunge" : HWwalking
@@ -4996,6 +5005,7 @@ void
 drain_en(n)
 int n;
 {
+    WEB_SOUND("energy_drain"); /* RVIP sound */
     if (!u.uenmax) {
         /* energy is completely gone */
         You_feel("momentarily lethargic.");

@@ -1277,6 +1277,7 @@ struct obj *obj;
                 You("swing %s, but the rubble has no place to go.",
                     yobjnam(obj, (char *) 0));
             } else {
+                WEB_SOUND("air"); /* RVIP sound */
                 You("swing %s through thin air.", yobjnam(obj, (char *) 0));
             }
         } else {
@@ -1318,6 +1319,7 @@ struct obj *obj;
         }
     } else if (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)) {
         /* it must be air -- water checked above */
+        WEB_SOUND("air"); /* RVIP sound */
         You("swing %s through thin air.", yobjnam(obj, (char *) 0));
     } else if (!can_reach_floor(FALSE)) {
         cant_reach_floor(u.ux, u.uy, FALSE, FALSE);

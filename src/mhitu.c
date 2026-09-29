@@ -79,7 +79,7 @@ struct attack *mattk;
     const char *pfmt = 0;
     char *Monst_name = Monnam(mtmp);
 
-    WEB_SOUND("mon_hit"); /* RVIP sound */
+    WEB_SOUND("hit1"); /* RVIP sound */
     /* Note: if opposite gender, "seductively" */
     /* If same gender, "engagingly" for nymph, normal msg for others */
     if ((compat = could_seduce(mtmp, &youmonst, mattk)) != 0
@@ -188,7 +188,7 @@ struct attack *mattk;
     boolean nearmiss = (target == roll),
             already_killed = FALSE;
     int tmp = rnd(5) + 3;
-    WEB_SOUND("mon_miss"); /* RVIP sound */
+    WEB_SOUND("swing"); /* RVIP sound */
     /* 3 values for blocker
      * No blocker: (struct obj *) 0
      * Piece of armour: object

@@ -2322,6 +2322,7 @@ int final; /* ENL_GAMEINPROGRESS:0, ENL_GAMEOVERALIVE, ENL_GAMEOVERDEAD */
 {
     char buf[BUFSZ], tmpbuf[BUFSZ];
 
+    if (mode & MAGICENLIGHTENMENT) WEB_SOUND("magic1"); /* RVIP sound */
     en_win = create_nhwindow(NHW_MENU);
     en_via_menu = !final;
     if (en_via_menu)

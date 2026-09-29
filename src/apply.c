@@ -3693,6 +3693,7 @@ struct obj **objp;
 
     } else if (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)) {
         /* it must be air -- water checked above */
+        WEB_SOUND("air"); /* RVIP sound */
         You("snap your whip through thin air.");
 
     } else {

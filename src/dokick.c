@@ -719,6 +719,7 @@ xchar x, y;
                 You("are unable to break open the lock of such a container.");
                 return 1;
             } else if (!rn2(5) || (martial() && !rn2(2))) {
+                WEB_SOUND("crack"); /* RVIP sound */
                 You("break open the lock!");
                 breakchestlock(kickedobj, FALSE);
                 if (otrp)
@@ -727,6 +728,7 @@ xchar x, y;
             }
         } else {
             if (!rn2(3) || (martial() && !rn2(2))) {
+                WEB_SOUND("slams"); /* RVIP sound */
                 pline_The("lid slams open, then falls shut.");
                 kickedobj->lknown = 1;
                 if (otrp)
@@ -1378,6 +1380,7 @@ dokick()
             if (Levitation)
                 goto dumb;
             if (rn2(5)) {
+                WEB_SOUND("metal"); /* RVIP sound */
                 if (!Deaf)
                     pline("Klunk!  The pipes vibrate noisily.");
                 else
@@ -1439,6 +1442,7 @@ dokick()
                     hurtle(-u.dx, -u.dy, rn1(2, 2), TRUE);
                 return 1;
             } else {
+                WEB_SOUND(flags.female ? "ouch_f" : "ouch_m"); /* RVIP sound */
                 pline("Ouch!  That hurts!");
                 exercise(A_DEX, FALSE);
                 exercise(A_STR, FALSE);
@@ -1469,6 +1473,7 @@ dokick()
  dumb:
         exercise(A_DEX, FALSE);
         if (martial() || ACURR(A_DEX) >= 16 || rn2(3)) {
+            WEB_SOUND("air"); /* RVIP sound */
             You("kick at empty space.");
             if (Blind)
                 feel_location(x, y);
@@ -1505,10 +1510,12 @@ dokick()
             || ((maybe_polyd(is_giant(youmonst.data), Race_if(PM_GIANT))
                 || maybe_polyd(is_centaur(youmonst.data), Race_if(PM_CENTAUR)))
             && !rn2(5))) && !shopdoor) {
+            WEB_SOUND("crack"); /* RVIP sound */
             pline("As you kick the door, it shatters to pieces!");
             exercise(A_STR, TRUE);
             maploc->doormask = D_NODOOR;
         } else {
+            WEB_SOUND("crack"); /* RVIP sound */
             pline("As you kick the door, it crashes open!");
             exercise(A_STR, TRUE);
             maploc->doormask = D_BROKEN;
@@ -1536,6 +1543,7 @@ dokick()
         if (Blind)
             feel_location(x, y); /* we know we hit it */
         exercise(A_STR, TRUE);
+        WEB_SOUND("whammm"); /* RVIP sound */
         pline("WHAMMM!!!");
         /* a barefoot hero who hates the door's material is hurt when an
            unbreakable metal door refuses to budge */

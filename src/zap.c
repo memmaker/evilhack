@@ -6657,6 +6657,7 @@ boolean moncast;
             } else if (temple_at_boundary(x, y)) {
                 add_damage(x, y, 0L);
             }
+            WEB_SOUND("crack"); /* RVIP sound */
             lev->doormask = new_doormask;
             unblock_point(x, y); /* vision */
             if (see_it) {

@@ -96,6 +96,7 @@ dowaternymph()
             You("attract %s!", a_monnam(mtmp));
         else
             You_hear("a seductive voice.");
+        WEB_SOUND("giggle"); /* RVIP sound */
         mtmp->msleeping = 0;
         if (t_at(mtmp->mx, mtmp->my))
             (void) mintrap(mtmp);
@@ -114,6 +115,7 @@ dolavademon()
     if (!(mvitals[PM_LAVA_DEMON].mvflags & G_GONE)) {
         if ((mtmp = makemon(&mons[PM_LAVA_DEMON], u.ux, u.uy,
                             NO_MM_FLAGS)) != 0) {
+            WEB_SOUND("forge_summon"); /* RVIP sound */
             if (!Blind)
                 You("summon %s!", a_monnam(mtmp));
             else
@@ -177,6 +179,7 @@ genericptr_t arg;
     if ((ttmp = t_at(x, y)) != 0 && !delfloortrap(ttmp))
         return;
 
+    if (!ctx->poolcnt) WEB_SOUND("water"); /* RVIP sound */
     if (!(ctx->poolcnt++))
         pline("Water gushes forth from the overflowing fountain!");
 
@@ -344,10 +347,12 @@ struct obj *obj;
             if ((!rn2((P_SKILL(P_HAMMER) < P_SKILLED) ? 8 : 2)
                  || (uchain && uchain->oeroded))
                 && Luck >= 0) { /* training up hammer skill pays off */
+                WEB_SOUND("forge_unchained"); /* RVIP sound */
                 pline_The("%schain breaks free!",
                           (uchain && uchain->oeroded) ? "rusted " : "");
                 unpunish();
             } else {
+                WEB_SOUND("forge_failure"); /* RVIP sound */
                 pline("Clang!");
             }
         }
@@ -380,6 +385,7 @@ result:
     case 7:
     case 8:
     case 9: /* Strange feeling */
+        WEB_SOUND("forge_nothing"); /* RVIP sound */
         pline("A weird sensation runs up your %s.", body_part(ARM));
         break;
     case 10:
@@ -397,6 +403,7 @@ result:
         /* TODO: perhaps our hero needs to wield some sort of tool to
            successfully reforge an object? */
         if (Luck >= 0) {
+            WEB_SOUND("forge_repaired"); /* RVIP sound */
             if (greatest_erosion(obj) > 0) {
                 if (!Blind)
                     You("successfully reforge your %s, repairing some of the damage.",
@@ -452,6 +459,7 @@ result:
     case 28:
     case 29:
     case 30: /* Strange feeling */
+        WEB_SOUND("forge_nothing"); /* RVIP sound */
         You_feel("a sudden flare of heat.");
         break;
     }
@@ -904,6 +912,7 @@ doforging()
         if (!artitype) {
             /* if the objects used do not match the recipe array,
                the forging process fails */
+            WEB_SOUND("forge_failure"); /* RVIP sound */
             You("fail to combine these two objects.");
             return 1;
         } else {
@@ -947,6 +956,7 @@ doforging()
             /* forged object is created */
             output = addinv(output);
             output->owt = weight(output);
+            WEB_SOUND("forge_repaired"); /* RVIP sound */
             You("have successfully forged %s.", doname(output));
             uwep->spe--;
             u.uconduct.forgedarti++;
@@ -1002,6 +1012,7 @@ doforging()
         if (!objtype) {
             /* if the objects used do not match the recipe array,
                the forging process fails */
+            WEB_SOUND("forge_failure"); /* RVIP sound */
             You("fail to combine these two objects.");
             return 1;
         } else {
@@ -1019,6 +1030,7 @@ doforging()
                 pline_The("%s and %s resist melding in the forge.",
                           materialnm[obj1->material],
                           materialnm[obj2->material]);
+                WEB_SOUND("forge_failure"); /* RVIP sound */
                 You("fail to combine the two objects.");
                 delobj(output);
                 return 1;
@@ -1207,6 +1219,7 @@ doforging()
 
             /* forged object is created */
             output = addinv(output);
+            WEB_SOUND("forge_repaired"); /* RVIP sound */
             You("have successfully forged %s.", doname(output));
             update_inventory();
             if (output->oprops) {
@@ -1387,6 +1400,7 @@ drinkfountain()
         return;
     }
 
+    WEB_SOUND("dunk"); /* RVIP sound */
     if (mgkftn && u.uluck >= 0 && fate >= 10) {
         int littleluck = (u.uluck < 4);
 
@@ -1536,6 +1550,7 @@ struct obj *obj;
         return;
     }
 
+    WEB_SOUND("dunk"); /* RVIP sound */
     /* Don't grant Excalibur when there's more than one object.  */
     /* (quantity could be > 1 if merged daggers got polymorphed) */
     if (obj->otyp == LONG_SWORD && obj->quan == 1L && u.ulevel >= 5 && !rn2(6)
@@ -1612,6 +1627,7 @@ dip_end:
     case 19:
     case 20: /* Uncurse the item */
         if (obj->cursed) {
+            WEB_SOUND("glow"); /* RVIP sound */
             if (!Blind)
                 pline_The("%s glows for a moment.", hliquid("water"));
             uncurse(obj);
@@ -1697,6 +1713,7 @@ void
 breakforge(x, y)
 int x, y;
 {
+    WEB_SOUND("forge_break"); /* RVIP sound */
     if (cansee(x, y) || (x == u.ux && y == u.uy))
         pline_The("forge splits in two as molten lava rushes forth!");
     levl[x][y].doormask = 0;
@@ -1709,6 +1726,7 @@ void
 blowupforge(x, y)
 int x, y;
 {
+    WEB_SOUND("forge_break"); /* RVIP sound */
     if (cansee(x, y) || (x == u.ux && y == u.uy))
         pline_The("forge rumbles, then explodes!  Molten lava splashes everywhere!");
     levl[x][y].typ = ROOM, levl[x][y].flags = 0;
@@ -1740,6 +1758,7 @@ drinkforge()
     }
 
     if (!likes_fire(youmonst.data)) {
+        WEB_SOUND("forge_quaff"); /* RVIP sound */
         pline("Molten lava incinerates its way down your gullet...");
         losehp(Upolyd ? u.mh : u.uhp, "drinking molten lava", KILLED_BY);
         return;
@@ -1747,6 +1766,7 @@ drinkforge()
     burn_away_slime();
     switch(rn2(20)) {
     case 0:
+        WEB_SOUND("forge_quaff"); /* RVIP sound */
         You("drink some molten lava.  Mmmmm mmm!");
         u.uhunger += rnd(50);
         break;
@@ -1755,12 +1775,14 @@ drinkforge()
         break;
     case 2:
     case 3:
+        WEB_SOUND("forge_summon"); /* RVIP sound */
         pline_The("%s moves as though of its own will!", hliquid("lava"));
         if ((mvitals[PM_FIRE_ELEMENTAL].mvflags & G_GONE)
             || !makemon(&mons[PM_FIRE_ELEMENTAL], u.ux, u.uy, NO_MM_FLAGS))
             pline("But it settles down.");
         break;
     default:
+        WEB_SOUND("forge_quaff"); /* RVIP sound */
         You("take a sip of molten lava.");
         u.uhunger += rnd(5);
     }

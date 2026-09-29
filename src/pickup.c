@@ -1598,6 +1598,7 @@ boolean telekinesis; /* not picking it up directly by hand */
         else if (!obj->spe && !obj->cursed)
             obj->spe = 1;
         else {
+            WEB_SOUND("crumble"); /* RVIP sound */
             pline_The("scroll%s %s to dust as you %s %s up.", plur(obj->quan),
                       otense(obj, "turn"), telekinesis ? "raise" : "pick",
                       (obj->quan == 1L) ? "it" : "them");
@@ -1616,8 +1617,9 @@ boolean telekinesis; /* not picking it up directly by hand */
     /* Whats left of the special case for gold :-) */
     if (obj->oclass == COIN_CLASS) {
         context.botl = 1;
-        WEB_SOUND("gold"); /* RVIP sound */
+        WEB_SOUND("coins"); /* RVIP sound */
     }
+    if (obj->oclass != COIN_CLASS) WEB_SOUND("pickup"); /* RVIP sound */
     if (obj->quan != count && obj->otyp != LOADSTONE)
         obj = splitobj(obj, count);
 
@@ -1633,6 +1635,7 @@ boolean telekinesis; /* not picking it up directly by hand */
     if (is_soko_prize_flag(obj)) {
         makeknown(obj->otyp);    /* obj is already known */
         obj->sokoprize = FALSE;  /* reset sokoprize flag */
+        WEB_SOUND("foop"); /* RVIP sound */
         livelog_printf(LL_ACHIEVE, "completed Sokoban, acquiring %s", an(xname(obj)));
         del_soko_prizes(); /* delete other sokoprizes */
         update_inventory();
@@ -1829,6 +1832,7 @@ int cindex, ccount; /* index of this container (1..N), number of them (N) */
             pline("%s is locked.", The(xname(cobj)));
         else
             pline("Hmmm, %s turns out to be locked.", the(xname(cobj)));
+        if (!cobj->lknown) WEB_SOUND("locked"); /* RVIP sound */
         cobj->lknown = 1;
 
         if (flags.autounlock) {
@@ -1881,6 +1885,7 @@ int cindex, ccount; /* index of this container (1..N), number of them (N) */
     if (cobj->otyp == BAG_OF_TRICKS) {
         int tmp;
 
+        WEB_SOUND("creak"); /* RVIP sound */
         You("carefully open %s...", the(xname(cobj)));
         pline("It develops a huge set of teeth and bites you!");
         tmp = rnd(10);

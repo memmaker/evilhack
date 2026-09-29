@@ -309,7 +309,7 @@ boolean incr; /* true iff via incremental experience growth */
 {             /*        (false for potion of gain level)    */
     int hpinc, eninc;
 
-    WEB_SOUND("levelup"); /* RVIP sound */
+    WEB_SOUND("fanfare"); /* RVIP sound */
     if (!incr)
         You_feel("more experienced.");
 

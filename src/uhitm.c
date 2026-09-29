@@ -765,7 +765,7 @@ int dieroll;
     }
 
     if (!*mhit) {
-    WEB_SOUND("miss"); /* RVIP sound */
+    WEB_SOUND("swing"); /* RVIP sound */
         missum(mon, rollneeded, dieroll, uattk, (rollneeded + armorpenalty > dieroll));
     } else {
         int oldhp = mon->mhp;
@@ -778,7 +778,7 @@ int dieroll;
         /* we hit the monster; be careful: it might die or
            be knocked into a different location */
         notonhead = (mon->mx != bhitpos.x || mon->my != bhitpos.y);
-    WEB_SOUND("hit"); /* RVIP sound */
+    WEB_SOUND("hit1"); /* RVIP sound */
         malive = hmon(mon, weapon, HMON_MELEE, dieroll);
         if (malive) {
             /* monster still alive */
