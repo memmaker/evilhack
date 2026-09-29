@@ -4100,6 +4100,7 @@ struct monst *mtmp;
             if (Deaf) /* nothing happens */
                 return 0;
 
+            WEB_SOUND("pan_flute"); /* RVIP sound */
             if (!vismon) {
                 if (!Deaf) {
                     You_hear("a pan flute being played %s.",

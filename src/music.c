@@ -663,6 +663,8 @@ struct obj *instr;
         break;
     case PAN_FLUTE: /* satyr exclusive */
         do_spec &= (rn2(ACURR(A_DEX)) + u.ulevel > 25);
+        if (!Deaf)
+            WEB_SOUND("pan_flute"); /* RVIP sound */
         You("%sproduce %s%s music.", !Deaf ? "" : "seem to ",
             Hallucination ? "weird" : "beautiful",
             do_spec ? ", enchanting" : "");
@@ -758,8 +760,10 @@ struct obj *instr;
     case MAGIC_HARP: /* Charm monsters */
         consume_obj_charge(instr, TRUE);
 
-        if (!Deaf)
+        if (!Deaf) {
+            WEB_SOUND("harp_magic"); /* RVIP sound */
             pline("%s very attractive music.", Tobjnam(instr, "produce"));
+        }
         else
             You_feel("very soothing vibrations.");
         charm_monsters((u.ulevel - 1) / 3 + 1);
@@ -767,9 +771,11 @@ struct obj *instr;
         break;
     case HARP: /* May calm Nymph */
         do_spec &= (rn2(ACURR(A_DEX)) + u.ulevel > 25);
-        if (!Deaf)
+        if (!Deaf) {
+            WEB_SOUND("harp_wood"); /* RVIP sound */
             pline("%s %s.", Yname2(instr),
                   do_spec ? "produces a lilting melody" : "twangs");
+        }
         else
             You_feel("soothing vibrations.");
         if (do_spec)
@@ -883,6 +889,14 @@ struct obj *instr;
             }
         }
 
+        if (!Deaf) {
+            if (instr->otyp == MAGIC_HARP)
+                WEB_SOUND("harp_magic"); /* RVIP sound */
+            else if (instr->otyp == HARP)
+                WEB_SOUND("harp_wood"); /* RVIP sound */
+            else if (instr->otyp == PAN_FLUTE)
+                WEB_SOUND("pan_flute"); /* RVIP sound */
+        }
         You(!Deaf ? "extract a strange sound from %s!"
                   : "can feel %s emitting vibrations.", the(xname(instr)));
 
