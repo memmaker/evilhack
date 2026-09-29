@@ -91,6 +91,7 @@ STATIC_OVL void
 give_may_advance_msg(skill)
 int skill;
 {
+    WEB_SOUND("fanfare"); /* RVIP sound */
     You_feel("more confident in your %sskills.",
              (skill == P_NONE) ? ""
                : (skill <= P_LAST_WEAPON) ? "weapon "
@@ -2328,6 +2329,7 @@ int skill;
         P_ADVANCE(skill) = practice_needed_to_advance(P_SKILL(skill) - 1);
     }
     /* subtly change the advance message to indicate no more advancement */
+    WEB_SOUND("fanfare"); /* RVIP sound */
     You("are now %s skilled in %s.",
         P_SKILL(skill) >= P_MAX_SKILL(skill) ? "most" : "more",
         P_NAME(skill));

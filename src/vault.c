@@ -898,12 +898,14 @@ struct monst *grd;
                 set_malign(grd);
                 newsym(grd->mx, grd->my); /* update display */
  letknow:
-                if (!cansee(grd->mx, grd->my) || !mon_visible(grd))
+                if (!cansee(grd->mx, grd->my) || !mon_visible(grd)) {
+                    if (m_carrying(grd, PEA_WHISTLE))
+                        WEB_SOUND("whistle_guard"); /* RVIP sound */
                     You_hear("%s.",
                              m_carrying(grd, PEA_WHISTLE)
                                  ? "the shrill sound of a guard's whistle"
                                  : "angry shouting");
-                else
+                } else
                     You(um_dist(grd->mx, grd->my, 2)
                             ? "see %s approaching."
                             : "are confronted by %s.",

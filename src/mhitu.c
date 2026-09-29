@@ -1926,6 +1926,7 @@ struct attack *mattk;
     case AD_ELEC:
         hitmsg(mtmp, mattk);
         if (uncancelled) {
+            WEB_SOUND("spark"); /* RVIP sound */
             You("get zapped!");
             if (how_resistant(SHOCK_RES) == 100) {
                 pline_The("zap doesn't shock you!");

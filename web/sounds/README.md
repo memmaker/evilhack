@@ -1,0 +1,1 @@
+Absurdly Evil Soundpack for EvilHack (updated to 0.9.1), user-provided zip. Credits per its Read Me: some purchased files, some from the YHACS sound pack, many from Freesound and Soundbible; licence unknown. Converted wav -> mono mp3.

@@ -7660,8 +7660,10 @@ boolean silent;
                 else if (!Blind)
                     You_see("%sangry guard%s approaching!",
                             sct == 1 ? "an " : "", sct > 1 ? "s" : "");
-            } else
+            } else {
+                WEB_SOUND("whistle_guard"); /* RVIP sound */
                 You_hear("the shrill sound of a guard's whistle.");
+            }
         }
         return TRUE;
     }

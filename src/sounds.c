@@ -1000,7 +1000,8 @@ struct monst *mtmp;
             return 0; /* no sound */
         break;
     case MS_BUZZ:
-        pline_msg = mtmp->mpeaceful ? "drones." : "buzzes angrily.";
+        { WEB_SOUND("mosquito"); /* RVIP sound */
+          pline_msg = mtmp->mpeaceful ? "drones." : "buzzes angrily."; }
         break;
     case MS_GRUNT:
         if (mtmp->mtame) {
@@ -1024,7 +1025,8 @@ struct monst *mtmp;
                 { WEB_SOUND("neigh"); /* RVIP sound */
                   pline_msg = "neighs."; }
             else if (moves > EDOG(mtmp)->hungrytime)
-                pline_msg = "whinnies.";
+                { WEB_SOUND("whinny"); /* RVIP sound */
+                  pline_msg = "whinnies."; }
             else if (EDOG(mtmp)->hungrytime > moves + 1000)
                 { WEB_SOUND("whicker"); /* RVIP sound */
                   pline_msg = "whickers contentedly."; }

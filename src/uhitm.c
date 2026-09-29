@@ -5066,9 +5066,11 @@ boolean wep_was_destroyed;
                     You("are%s seared by %s acidic hide!",
                         (Acid_resistance || Underwater) ? " mildly" : "",
                         s_suffix(mon_nam(mon)));
-                else
+                else {
+                    WEB_SOUND("slop"); /* RVIP sound */
                     You("are splashed by %s %s!", s_suffix(mon_nam(mon)),
                         hliquid("acid"));
+                }
             }
 
             if (!(Acid_resistance || Underwater))
