@@ -28,7 +28,7 @@ extern boolean FDECL(open_library, (const char *, library *));
 extern void FDECL(close_library, (library *));
 
 char *FDECL(eos, (char *)); /* also used by dlb.c */
-FILE *FDECL(fopen_datafile, (const char *, const char *));
+FILE *FDECL(fopen_datafile, (const char *, const char *, int));
 
 static void FDECL(Write, (int, char *, long));
 static void NDECL(usage) NORETURN;
@@ -143,8 +143,9 @@ char *s;
 
 /* open_library(dlb.c) needs this (which normally comes from src/files.c) */
 FILE *
-fopen_datafile(filename, mode)
+fopen_datafile(filename, mode, prefix) /* RVIP: dlb.c passes a prefix */
 const char *filename, *mode;
+int prefix UNUSED;
 {
     return fopen(filename, mode);
 }

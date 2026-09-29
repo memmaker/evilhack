@@ -20,10 +20,10 @@ STATIC_DCL struct obj *FDECL(oselect_recurse, (struct monst *, struct obj *,
                                                int, struct obj *));
 STATIC_DCL struct obj *FDECL(find_artifact_recurse, (struct monst *,
                                                      struct obj *, struct monst *,
-                                                     boolean, boolean,
+                                                     BOOLEAN_P, BOOLEAN_P,
                                                      struct obj *));
 STATIC_DCL struct obj *FDECL(find_silver_recurse, (struct monst *, struct obj *,
-                                                   struct monst *, boolean, boolean));
+                                                   struct monst *, BOOLEAN_P, BOOLEAN_P));
 STATIC_DCL struct obj *FDECL(find_gem_recurse, (struct monst *, struct obj *));
 STATIC_DCL int FDECL(skill_training_percent, (int));
 
