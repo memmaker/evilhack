@@ -101,6 +101,11 @@ emcc -O2 $WARN "$OBJ"/*.o --preload-file "$SEED/fs@/seed" -o "$OUT/evilhack-core
 rm -rf "$SEED"
 cp web/index.html web/evilhack.js "$GEN/tiles.png" "$OUT/"
 python3 web/make-help.py > "$OUT/help.html"
+# sound effects (RVIP stage 6): synthesized, one wav per WEB_SOUND("name") in the game
+python3 web/mksounds.py "$OUT/sound"
+for s in $(grep -ho 'WEB_SOUND("[a-z_]*")\|web_sound("[a-z_]*")' src/*.c win/web/winweb.c | sed 's/.*("\(.*\)")/\1/' | sort -u); do
+	[ -f "$OUT/sound/$s.wav" ] || { echo "no sound for $s"; exit 1; }
+done
 # text fonts: the index page's fonts/*.woff (served at ../fonts/ next to the games); [] if not here
 (cd "$ROGUELIKES/fonts" 2>/dev/null && ls *.woff 2>/dev/null | sed 's/\.woff$//') \
 	| python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))' > "$OUT/fonts.json"

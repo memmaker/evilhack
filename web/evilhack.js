@@ -32,7 +32,7 @@
 	var cv, ctx, cell = 32, dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
 	var log = [], prompt = '', wm = null;
 	var LAYOUT = DIR + '/web-layout.json', NAMEF = DIR + '/web-name';
-	var L = { tiles: 'NetHack 3.6', cells: { multi: 0, single: 0 }, wm: null, sound: false, music: false, face: '', mapFace: '' };
+	var L = { tiles: 'NetHack 3.6', cells: { multi: 0, single: 0 }, wm: null, sound: false, face: '', mapFace: '' };
 	var shadow = window.nhShadow = { map: [], status: '', inv: '', eq: '', vis: '', pop: '', popTitle: '', popRows: [], popCur: -1,
 		prompt: '', topl: '', msgs: log, hero: null, ended: false, over: null, saves: 0 };
 
@@ -235,7 +235,7 @@
 			if (s) {
 				if (typeof s.tiles === 'string') L.tiles = s.tiles;
 				if (s.cells) L.cells = { multi: s.cells.multi | 0, single: s.cells.single | 0 };
-				L.wm = s.wm || null; L.sound = s.sound === true; L.music = s.music === true;
+				L.wm = s.wm || null;   /* sound is not kept: off after every reload */
 				L.face = typeof s.face === 'string' ? s.face : ''; L.mapFace = typeof s.mapFace === 'string' ? s.mapFace : '';
 			}
 		} catch (e) { }
@@ -292,10 +292,18 @@
 	}
 
 	/* ---------- sound (stage 6): off by default ---------- */
-	function showAudio() { $('chk-sound').checked = L.sound; $('chk-music').checked = L.music; }
-	function toggleAudio(k) { L[k] = !L[k]; showAudio(); saveLayout(); }
+	/* The game names the event at the action (WEB_SOUND in hack.h, win/web/winweb.c
+	 * js_sound); this only mutes it. Synthesized sound/<name>.wav (web/mksounds.py),
+	 * fetched on first play. No music: EvilHack ships none. */
+	function showAudio() { $('chk-sound').checked = L.sound; }
+	function toggleAudio(k) { L[k] = !L[k]; showAudio(); }
+	var sounds = window.nhSounds = [];      /* test hook: every event the game raised */
 
 	var nh = {
+		sound: function (name) {
+			sounds.push(name);
+			if (L.sound && window.RVIPSound) RVIPSound.play([name], 0.6);
+		},
 		map: function (cp, tp, hx, hy, lev) {
 			cells = Module.HEAP32.slice(cp >> 2, (cp >> 2) + COLNO * ROWNO);
 			chars = Module.HEAP32.slice(tp >> 2, (tp >> 2) + COLNO * ROWNO);
@@ -483,7 +491,6 @@
 		});
 		$('btn-tiles').onclick = function () { cycleTiles(); };
 		$('chk-sound').onchange = function () { toggleAudio('sound'); };
-		$('chk-music').onchange = function () { toggleAudio('music'); };
 		RvipWM.dropdown($('btn-file'), $('menu-file'));
 		RvipWM.dropdown($('btn-audio'), $('menu-audio'));
 		fetch('fonts.json').then(function (r) { return r.json(); }).then(function (list) {
