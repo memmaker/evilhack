@@ -1902,6 +1902,7 @@ struct obj *otmp;
 
     context.tin.tin = otmp;
     context.tin.o_id = otmp->o_id;
+    WEB_SOUND("tin"); /* RVIP sound */
     if (!tmp) {
         consume_tin(mesg); /* begin immediately */
     } else {
@@ -1933,6 +1934,7 @@ struct obj *obj;
     if (!Upolyd && Race_if(PM_DRAUGR))
         return 0;
 
+    WEB_SOUND(flags.female ? "blecch_f" : "blecch_m"); /* RVIP sound */
     pline("Blecch!  Rotten %s!",
           maybe_polyd(is_vampire(youmonst.data), Race_if(PM_VAMPIRE))
           ? "blood" : foodword(obj));
@@ -2855,6 +2857,7 @@ struct obj *otmp;
             make_blinded((long) u.ucreamed, TRUE);
         break;
     case FORTUNE_COOKIE:
+        WEB_SOUND("cookie"); /* RVIP sound */
         outrumor(bcsign(otmp), BY_COOKIE);
         if (!Blind) {
             if (!u.uconduct.literate++)
@@ -4296,6 +4299,7 @@ vomit() /* A good idea from David Neves */
            dealing with some esoteric body_part() */
         Your("jaw gapes convulsively.");
     } else {
+        WEB_SOUND(flags.female ? "vomit_f" : "vomit_m"); /* RVIP sound */
         if (Sick && (u.usick_type & SICK_VOMITABLE) != 0)
             make_sick(0L, (char *) 0, TRUE, SICK_VOMITABLE);
         /* if not enough in stomach to actually vomit then dry heave;
