@@ -1623,6 +1623,9 @@ int how;
     program_state.gameover = 1;
     /* in case of a subsequent panic(), there's no point trying to save */
     program_state.something_worth_saving = 0;
+#ifdef WEB_GRAPHICS
+    web_game_over(how); /* RVIP: the page's hook for the run report */
+#endif
 #ifdef HANGUPHANDLING
     if (program_state.done_hup)
         done_stopprint++;

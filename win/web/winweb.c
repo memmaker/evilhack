@@ -4,8 +4,12 @@
  *   js_map:  ROWNO*COLNO tile indexes (-1 = nothing), the same cells as
  *            text (char | colour << 8, the game's own), hero, level
  *   js_text: 0 prompt, 1 status lines, 2 inventory, 3 pop-up, 4 new
- *            message, 5 messages so far are old, 6 replace last message.
- *            Rows are tab-separated (tile, letter, sel, colour, text).
+ *            message, 5 messages so far are old, 6 replace last message,
+ *            7 equipment rows, 8 Visible list, 9 prompt line over the map.
+ *            Rows are tab-separated (tile, letter, sel, colour, symbol
+ *            code, text).  Status lines: segments "clr.attr|text"
+ *            joined by \x1f (hilite_status colours, HL_* attributes).
+ *            Visible: RvipWM.visible lines M/I<glyph><name>\t<css>\t<tile>.
  * Keys come from Module.nh.key(); Asyncify lets the game wait for them.
  * Modelled on ~/Games/nethack50/win/sdl2/winsdl.c + winweb.h. */
 
@@ -23,6 +27,11 @@ EM_JS(void, js_text, (int id, const char *s),
       { Module.nh.text(id, UTF8ToString(s)); });
 EM_JS(int, js_key, (int peek, int at_cmd), { return Module.nh.key(peek, at_cmd); });
 EM_ASYNC_JS(void, js_end, (void), { await Module.nh.end(); });
+/* game over (how = DIED..ASCENDED, src/end.c): the hook for ev=win (stage 9) */
+EM_JS(void, js_over, (int how), { if (Module.nh.over) Module.nh.over(how); });
+/* autosave: the page asks (hide, Export); after a checkpoint it syncs IDBFS */
+EM_JS(int, js_save_req, (void), { var r = Module.nh.saveReq | 0; Module.nh.saveReq = 0; return r; });
+EM_JS(void, js_saved, (void), { if (Module.nh.saved) Module.nh.saved(); });
 
 #define HIST_MAX 300
 #define MAXWIN 32
@@ -32,7 +41,7 @@ struct line { char *s; int attr, clr; };
 struct mitem {
     anything id;
     char ch, gch;
-    int attr, clr, tile;
+    int attr, clr, tile, sym;
     char *s;
     boolean sel;
 };
@@ -54,6 +63,8 @@ static char hist_prev[BUFSZ];
 static int hist_reps, nhist;
 static int mouse_x, mouse_y, mouse_btn;
 static char promptbuf[BUFSZ * 2]; /* active prompt line (yn/getlin) */
+static char toplast[BUFSZ + 16];  /* newest message since the last clear */
+static char *statline[2];         /* status lines (segments), web_status_update */
 static struct mitem *perm;        /* persistent inventory copy */
 static int nperm;
 static boolean perm_building, perm_dirty; /* dirty: refresh at the prompt */
@@ -77,6 +88,14 @@ web_push_key(int k)
 {
     if (kqn < (int) SIZE(kq))
         kq[kqn++] = k;
+}
+
+/* src/end.c really_done(): the run is over (how = DIED .. ASCENDED);
+   the page learns how (stage 9 sends ev=win for ASCENDED from here) */
+void
+web_game_over(int how)
+{
+    js_over(how);
 }
 
 static void web_getlin(const char *, char *);
@@ -136,6 +155,121 @@ glyph_color(int glyph)
     return color;
 }
 
+/* the game's own map symbol for a glyph (row icons in text mode) */
+static int
+glyph_sym(int glyph)
+{
+    int ch, color;
+    unsigned special;
+
+    if (glyph == NO_GLYPH)
+        return 0;
+    mapglyph(glyph, &ch, &color, &special, 0, 0, 0);
+    return ch & 0xff;
+}
+
+/* CSS colours of the page palette (web/evilhack.js PAL), for Visible lines */
+static const char *const css[16] = {
+    "#555", "#c82828", "#28aa28", "#aa6e28", "#3c3cdc", "#aa28aa", "#28aaaa", "#c8c8c8",
+    "#646464", "#ff8c00", "#5aff5a", "#ffff50", "#6e6eff", "#ff5aff", "#5affff", "#fff"
+};
+
+/* one menu/inventory row: tile, letter, 0/1 selected or 2 heading, colour,
+   symbol code, text */
+static void
+row_add(struct mitem *m)
+{
+    tadd("%d\t%c\t%d\t%d\t%d\t%s\n", m->id.a_void ? m->tile : -1,
+         m->ch ? m->ch : ' ', m->id.a_void ? m->sel : 2,
+         m->id.a_void ? cidx(m->attr, m->clr) : CLR_YELLOW,
+         m->id.a_void ? m->sym : 0, m->s);
+}
+
+/* Equipment window: what the hero wears and wields, from the game's own
+   slots (uwep, uarm, ...), named and coloured like inventory rows */
+static void
+equip_rows(void)
+{
+    static struct { struct obj **o; const char *slot; } eq[] = {
+        { &uwep, "Weapon" },   { &uswapwep, "Swap" },  { &uquiver, "Quiver" },
+        { &uarmh, "Helmet" },  { &uarmc, "Cloak" },    { &uarm, "Armor" },
+        { &uarmu, "Shirt" },   { &uarms, "Shield" },   { &uarmg, "Gloves" },
+        { &uarmf, "Boots" },   { &uamul, "Amulet" },   { &uleft, "Left ring" },
+        { &uright, "Right ring" }, { &ublindf, "Eyes" },
+    };
+    int i, clr, attr;
+    char *nm;
+
+    tlen = 0, tadd("%s", "");
+    for (i = 0; i < (int) SIZE(eq); i++) {
+        struct obj *o = *eq[i].o;
+        int glyph;
+
+        if (!o)
+            continue;
+        if (o == uswapwep && u.twoweap)
+            ; /* still listed: it is the off-hand weapon */
+        glyph = obj_to_glyph(o, rn2_on_display_rng);
+        nm = doname(o);
+        clr = glyph_color(glyph), attr = 0;
+        if (iflags.use_menu_color)
+            (void) get_menu_coloring(nm, &clr, &attr);
+        tadd("%d\t%c\t0\t%d\t%d\t%s: %s\n", glyph2tile[glyph],
+             o->invlet ? o->invlet : ' ', cidx(attr, clr), glyph_sym(glyph),
+             eq[i].slot, nm);
+    }
+    js_text(7, tbuf);
+}
+
+/* Visible window: monsters the hero can spot and objects in sight, from
+   the glyph the game shows at each square (never from text) */
+static void
+visible_list(void)
+{
+    int x, y;
+    char buf[BUFSZ];
+
+    tlen = 0, tadd("%s", "");
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++) {
+            int glyph = glyph_at(x, y), mn;
+            struct monst *mtmp;
+
+            if (x == u.ux && y == u.uy)
+                continue;
+            if (glyph_is_monster(glyph)) {
+                mn = glyph_to_mon(glyph);
+                if (mn == PM_LONG_WORM_TAIL || !(mtmp = m_at(x, y))
+                    || !canspotmon(mtmp))
+                    continue;
+                Sprintf(buf, "%s%s", Hallucination ? ""
+                        : mtmp->mtame ? "tame " : mtmp->mpeaceful ? "peaceful " : "",
+                        mons[mn].mname);
+                if (!Hallucination && has_mname(mtmp))
+                    Sprintf(eos(buf), " called %s", MNAME(mtmp));
+                tadd("M%c%s\t%s\t%d\n", glyph_sym(glyph), buf,
+                     css[cidx(0, glyph_color(glyph))], glyph2tile[glyph]);
+            } else if (glyph_is_object(glyph) && cansee(x, y)) {
+                struct obj *otmp = vobj_at(x, y);
+
+                /* the top object named as the game names things seen from
+                   afar (lookat: distant_name, no dknown set); hallucinated
+                   glyphs are random objects: their type's name */
+                if (otmp && !Hallucination)
+                    Strcpy(buf, distant_name(otmp, xname));
+                else if (glyph_is_body(glyph))
+                    Sprintf(buf, "%s corpse", mons[glyph - GLYPH_BODY_OFF].mname);
+                else if (glyph_is_statue(glyph))
+                    Sprintf(buf, "statue of %s", an(mons[glyph - GLYPH_STATUE_OFF].mname));
+                else
+                    Strcpy(buf, obj_typename(glyph_to_obj(glyph)));
+                tadd("I%c%s\t%s\t%d\n", glyph_sym(glyph), buf,
+                     css[cidx(0, glyph_color(glyph))], glyph2tile[glyph]);
+            }
+        }
+    js_text(8, tbuf);
+}
+
 static void
 redraw(void)
 {
@@ -155,21 +289,17 @@ redraw(void)
         }
     js_map(cells, chars, u.ux, u.uy, u.uz.dnum * 100 + u.uz.dlevel);
     js_text(0, promptbuf);
+    js_text(9, *promptbuf ? promptbuf : toplast);
 
     tlen = 0, tadd("%s", "");
-    if (WIN_STATUS != WIN_ERR)
-        for (i = 0; i < wins[WIN_STATUS].nlines; i++)
-            tadd("%s\n", wins[WIN_STATUS].lines[i].s
-                             ? wins[WIN_STATUS].lines[i].s : "");
+    for (i = 0; i < 2; i++)
+        if (statline[i])
+            tadd("%s%s", i ? "\n" : "", statline[i]);
     js_text(1, tbuf);
 
-    /* rows: tile, letter, 0/1 selected or 2 heading, colour, text */
     tlen = 0, tadd("%s", "");
     for (i = 0; i < nperm; i++)
-        tadd("%d\t%c\t%d\t%d\t%s\n", perm[i].tile,
-             perm[i].ch ? perm[i].ch : ' ', perm[i].id.a_void ? 0 : 2,
-             perm[i].id.a_void ? cidx(perm[i].attr, perm[i].clr) : CLR_YELLOW,
-             perm[i].s);
+        row_add(&perm[i]);
     js_text(2, tbuf);
 
     tlen = 0, tadd("%s", "");
@@ -179,18 +309,47 @@ redraw(void)
         tadd("%d\t%d\t%s\n", pop_top, pop_cur, w->prompt ? w->prompt : "");
         n = w->nitems ? w->nitems : w->nlines;
         for (i = 0; i < n; i++)
-            if (w->nitems) {
-                struct mitem *m = &w->items[i];
-
-                tadd("%d\t%c\t%d\t%d\t%s\n", m->tile, m->ch ? m->ch : ' ',
-                     m->id.a_void ? m->sel : 2,
-                     m->id.a_void ? cidx(m->attr, m->clr) : CLR_YELLOW, m->s);
-            } else
-                tadd("-1\t \t2\t%d\t%s\n",
+            if (w->nitems)
+                row_add(&w->items[i]);
+            else
+                tadd("-1\t \t2\t%d\t0\t%s\n",
                      cidx(w->lines[i].attr, w->lines[i].clr),
                      w->lines[i].s ? w->lines[i].s : "");
     }
     js_text(3, tbuf);
+    if (program_state.something_worth_saving && !program_state.saving) {
+        equip_rows();
+        visible_list();
+    }
+}
+
+/* RVIP autosave (INSURANCE checkpoint, like nethack50): idle 1 s at the
+   command prompt after the turn counter moved, or when the page asks
+   (hidden tab, Export): the current level and the game state go into the
+   level files (<uid><name>.N, lock file .0), nothing on the screen
+   changes; the page copies them to IndexedDB.  A reload finds the lock
+   file and self-recovers (sys/unix/unixunix.c getlock). */
+static double idle_since;
+static long ckpt_moves = -1;
+
+static void
+autosave(boolean atcmd)
+{
+#ifdef INSURANCE
+    int req;
+
+    if (!atcmd || multi || occupation || kqn || !flags.ins_chkpt
+        || !program_state.something_worth_saving || program_state.gameover
+        || program_state.saving || program_state.restoring)
+        return;
+    req = js_save_req();
+    if (!(req || (moves != ckpt_moves
+                  && emscripten_get_now() - idle_since > 1000)))
+        return;
+    ckpt_moves = moves;
+    save_currentstate();
+    js_saved();
+#endif
 }
 
 /* returns a key, or 0 for a map click (mouse_* set).  From JS: ASCII,
@@ -213,10 +372,14 @@ getkey(boolean want_mouse)
         boolean np = iflags.num_pad;
 
         /* at the command prompt: nh_poskey (mouse allowed), no pop-up/prompt */
-        if ((k = js_key(0, want_mouse && popup < 0 && !*promptbuf)) < 0) {
+        boolean atcmd = want_mouse && iflags.in_parse && popup < 0 && !*promptbuf;
+
+        if ((k = js_key(0, atcmd)) < 0) {
+            autosave(atcmd);
             emscripten_sleep(15);
             continue;
         }
+        idle_since = emscripten_get_now();
         if (k & 0x20000) {
             int i = k & 0xffff;
 
@@ -274,6 +437,7 @@ add_msg(const char *s)
         free(hist[(nhist - 1) % HIST_MAX]);
         hist[(nhist - 1) % HIST_MAX] = xstrdup(fold);
         js_text(6, fold);
+        Strcpy(toplast, fold);
         return;
     }
     snprintf(hist_prev, sizeof hist_prev, "%s", s);
@@ -281,6 +445,7 @@ add_msg(const char *s)
     free(hist[nhist % HIST_MAX]);
     hist[nhist % HIST_MAX] = xstrdup(s);
     js_text(4, s);
+    snprintf(toplast, sizeof toplast, "%s", s);
     nhist++;
 }
 
@@ -657,6 +822,7 @@ web_clear_nhwindow(winid w)
     switch (wins[w].type) {
     case NHW_MESSAGE:
         js_text(5, "");
+        *toplast = 0;
         break;
     case NHW_MAP:
         memset(mapset, 0, sizeof mapset);
@@ -796,6 +962,14 @@ web_add_menu(winid w, int glyph, const ANY_P *id, CHAR_P ch, CHAR_P gch, int att
     m->ch = ch, m->gch = gch, m->attr = attr;
     m->clr = glyph_color(glyph);
     m->tile = (glyph != NO_GLYPH) ? glyph2tile[glyph] : -1;
+    m->sym = glyph_sym(glyph);
+    /* menucolors: the game's own colour rules for the row text */
+    if (iflags.use_menu_color && id->a_void) {
+        int c = m->clr, a = attr;
+
+        if (get_menu_coloring(str, &c, &a))
+            m->clr = c, m->attr = a;
+    }
     m->s = xstrdup(str);
     m->sel = preselected;
 }
@@ -1204,10 +1378,144 @@ web_end_screen(void)
 {
 }
 
+/* ---------- status: the game's two lines with hilite_status colours ---------- */
+
+extern char *status_vals[MAXBLSTATS];        /* src/windows.c (genl) */
+extern boolean status_activefields[MAXBLSTATS];
+static int st_color[MAXBLSTATS];            /* colour | HL_* attr << 8 */
+static unsigned long st_cmask[BL_ATTCLR_MAX]; /* condition colours/attrs */
+static long st_cond;
+
+/* one segment "clr.attr|text" (\x1f between segments); the label up to ':'
+   stays plain, as tty colours only the value */
+static void
+st_seg(const char *t, int color)
+{
+    const char *c = index(t, ':');
+    int clr = color & 0xff, attr = (color >> 8) & 0xff;
+
+    if (!*t)
+        return;
+    if (c && (clr != NO_COLOR || attr)) {
+        tadd("\x1f%d.0|%.*s", NO_COLOR, (int) (c - t + 1), t);
+        t = c + 1;
+    }
+    tadd("\x1f%d.%d|%s", clr, attr, t);
+}
+
+static void
+st_line(int ln)
+{
+    static const enum statusfields l1[] = {
+        BL_TITLE, BL_STR, BL_DX, BL_CO, BL_IN, BL_WI, BL_CH, BL_ALIGN,
+        BL_SCORE, BL_FLUSH
+    }, l2[] = {
+        BL_LEVELDESC, BL_GOLD, BL_HP, BL_HPMAX, BL_ENE, BL_ENEMAX, BL_AC,
+        BL_MC, BL_TOHIT, BL_XP, BL_EXP, BL_HD, BL_TIME, BL_REALTIME,
+        BL_HUNGER, BL_CAP, BL_CONDITION, BL_FLUSH
+    };
+    static const struct { long m; const char *t; } cn[] = {
+        { BL_MASK_STONE, "Stone" }, { BL_MASK_SLIME, "Slime" },
+        { BL_MASK_STRNGL, "Strngl" }, { BL_MASK_FOODPOIS, "FoodPois" },
+        { BL_MASK_TERMILL, "TermIll" }, { BL_MASK_WITHER, "Wither" },
+        { BL_MASK_BLIND, "Blind" }, { BL_MASK_DEAF, "Deaf" },
+        { BL_MASK_STUN, "Stun" }, { BL_MASK_CONF, "Conf" },
+        { BL_MASK_HALLU, "Hallu" }, { BL_MASK_LEV, "Lev" },
+        { BL_MASK_FLY, "Fly" }, { BL_MASK_RIDE, "Ride" },
+        { BL_MASK_SLOW, "Slow" }, { BL_MASK_PHASING, "Phasing" },
+    };
+    const enum statusfields *f = ln ? l2 : l1;
+    char buf[BUFSZ];
+    int i, j;
+
+    tlen = 0, tadd("%s", "");
+    for (i = 0; f[i] != BL_FLUSH; i++) {
+        int fld = f[i];
+        const char *val;
+
+        if (!status_activefields[fld] || !status_vals[fld])
+            continue;
+        val = status_vals[fld];
+        if (fld == BL_CONDITION) {
+            for (j = 0; j < (int) SIZE(cn); j++) {
+                int clr = NO_COLOR, attr = 0, c;
+
+                if (!(st_cond & cn[j].m))
+                    continue;
+                for (c = 0; c < CLR_MAX; c++)
+                    if (st_cmask[c] & cn[j].m)
+                        clr = c;
+                if (st_cmask[HL_ATTCLR_BOLD] & cn[j].m) attr |= HL_BOLD;
+                if (st_cmask[HL_ATTCLR_INVERSE] & cn[j].m) attr |= HL_INVERSE;
+                if (st_cmask[HL_ATTCLR_ULINE] & cn[j].m) attr |= HL_ULINE;
+                if (st_cmask[HL_ATTCLR_BLINK] & cn[j].m) attr |= HL_BLINK;
+                if (st_cmask[HL_ATTCLR_DIM] & cn[j].m) attr |= HL_DIM;
+                tadd("\x1f%d.0| ", NO_COLOR);
+                tadd("\x1f%d.%d|%s", clr, attr, cn[j].t);
+            }
+            continue;
+        }
+        switch (fld) { /* spacing as genl_status_update's first order */
+        case BL_HP: case BL_XP: case BL_HD: case BL_TIME: case BL_REALTIME:
+            tadd("\x1f%d.0| ", NO_COLOR);
+            break;
+        case BL_HUNGER:
+            if (strcmp(val, " "))
+                tadd("\x1f%d.0| ", NO_COLOR);
+            break;
+        case BL_CAP:
+            if (!strcmp(val, " "))
+                ++val;
+            break;
+        }
+        if (fld == BL_GOLD) /* \GXXXXNNNN: the gold glyph as its character */
+            val = decode_mixed(buf, val);
+        if (*val == ' ' && (fld == BL_HUNGER || fld == BL_CAP)) {
+            tadd("\x1f%d.0| ", NO_COLOR);
+            val++;
+        }
+        st_seg(val, st_color[fld]);
+    }
+    /* rule 5: no trailing blanks, no empty last segment */
+    for (;;) {
+        char *p;
+
+        while (tlen && tbuf[tlen - 1] == ' ')
+            tbuf[--tlen] = 0;
+        if (!tlen || tbuf[tlen - 1] != '|' || !(p = strrchr(tbuf, '\x1f')))
+            break;
+        *p = 0, tlen = p - tbuf;
+    }
+    free(statline[ln]);
+    statline[ln] = xstrdup(tlen && tbuf[0] == '\x1f' ? tbuf + 1 : tbuf);
+}
+
+static void
+web_status_update(int idx, genericptr_t ptr, int chg, int percent, int color,
+                  unsigned long *colormasks)
+{
+    if (idx >= 0) {
+        genl_status_update(idx, ptr, chg, percent, color, colormasks);
+        if (idx == BL_CONDITION) {
+            st_cond = ptr ? *(long *) ptr : 0L;
+            if (colormasks)
+                memcpy(st_cmask, colormasks, sizeof st_cmask);
+            else
+                memset(st_cmask, 0, sizeof st_cmask);
+        } else if (idx < MAXBLSTATS)
+            st_color[idx] = color;
+        return;
+    }
+    if (idx != BL_FLUSH && idx != BL_RESET)
+        return;
+    st_line(0);
+    st_line(1);
+}
+
 struct window_procs web_procs = {
     "web",
     WC_COLOR | WC_HILITE_PET | WC_TILED_MAP | WC_PERM_INVENT | WC_MOUSE_SUPPORT,
-    0L,
+    WC2_HILITE_STATUS | WC2_FLUSH_STATUS | WC2_RESET_STATUS,
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, /* has_color */
     web_init_nhwindows, web_player_selection, web_askname,
     web_get_nh_event, web_exit_nhwindows, web_suspend_nhwindows,
@@ -1230,6 +1538,6 @@ struct window_procs web_procs = {
 #endif
     web_start_screen, web_end_screen, genl_outrip, genl_preference_update,
     genl_getmsghistory, genl_putmsghistory, genl_status_init,
-    genl_status_finish, genl_status_enablefield, genl_status_update,
+    genl_status_finish, genl_status_enablefield, web_status_update,
     genl_can_suspend_no,
 };

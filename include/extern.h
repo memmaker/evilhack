@@ -1032,6 +1032,7 @@ E boolean web_menu_raw, web_menu_noletters;
 E int web_menu_key, web_menu_idx;
 E anything web_menu_pick;
 E void FDECL(web_push_key, (int));
+E void FDECL(web_game_over, (int));
 #endif
 E boolean NDECL(overexertion);
 E void NDECL(invocation_message);
