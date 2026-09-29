@@ -8,10 +8,53 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 - **Stage 2 (Explore + stairs + no `--More--`): done.**
 - **Stage 3 (Enter menu + inventory): done.**
 - **Stage 4 (Tiles): done.**
-- **Stage 5 (Web page and windows): done.** Next: **stage 6** (docs and sound).
+- **Stage 5 (Web page and windows): done.**
+- **Stage 6 (Docs and sound): done.** Next: **stage 7** (publish).
 - Live URL (after deploy): https://ruzzoli.de/roguelikes/evilhack/ — **ready to
   deploy** (`web/build.sh`, then `web/deploy.sh` from the Mac; not run: no ssh).
   **Mac pane check still owed** (stages 1-5 only seen headless).
+
+### Stage 6 facts
+- **Help:** `web/make-help.py` (self-contained, stdlib, no Docs folder) →
+  `dist/help.html`: about (Keith Simpson/k21971 from `dat/history` + source
+  headers, NGPL, lineage), changelog highlights (own words), key box, full key
+  list parsed from `dat/cmdhelp` evaluated for the web (number_pad 0, no
+  debug/shell/suspend/rest_on_space, "unavailable" rows and `^C` dropped: no
+  SIGINT in the browser), extended commands from `extcmdlist[]` (no wizard/
+  not-available), new players (roles/races from the Guidebook, EvilHack
+  differences), tips, saving, browser, **About this version** (0.9.3, commit
+  c444f6a3…, links to k21971/EvilHack/tree/<commit> and memmaker/evilhack,
+  "made public later"). Each key row carries `data-k` for tests. rvip-app.js
+  fetches help.html on first open, eats keys while open, Esc closes.
+- **Sound search:** WebSearch (worked once): no upstream sound; results only
+  mention a "lemrent" EvilHack sound pack for the curses/tty soundlib, no
+  licence or source found → not used. Upstream has only NetHack's
+  `sys/share/sounds/*.uu` instrument samples and USER_SOUNDS (message regex,
+  forbidden by rule 8). **No music** (no source) → no Music toggle.
+- **Sound:** `WEB_SOUND("name")` (include/hack.h, no-op off the web) at game
+  actions: hit/miss (`known_hitum`), mon_hit (`hitmsg`), mon_miss (`missmu`),
+  kill (`xkilled`), spell (energy spent in `spelleffects`), door_open/
+  door_close (lock.c), stairs (`goto_level`), levelup/leveldown (exper.c),
+  quaff (`dodrink`), eat (`start_eating`), hunger (`newuhs` worse than
+  before, ≥ Hungry), gold (`pickup_object`), zap (`weffects`), throw
+  (`throwit`), teleport (`teleds` with TELEDS_TELEPORT), pray (`dopray`),
+  death/win (`web_game_over`). `web_sound()` in winweb.c (skipped while
+  restoring) → `Module.nh.sound(name)` → page plays `sound/<name>.wav` via
+  `RVIPSound.play` only when *Audio ▾ Sound effects* is ticked; the choice is
+  **not stored** (off after every load). `window.nhSounds` = test log.
+- WAVs synthesized by `web/mksounds.py` (stdlib, 22 kHz mono 16-bit, 21
+  files, 448 KB) into `dist/sound/`; `build.sh` fails if a `WEB_SOUND` name
+  has no wav.
+- Tests (scratchpad `s6/`): `keys.cjs` presses all 132 listed keys + Enter:
+  no "Unknown command" (first run found `^C` → removed), S asks to save,
+  help open blocks keys, Esc closes, About section; `snd.cjs`: off by
+  default, events raised but nothing played/fetched while off, real click on
+  the checkbox → every later event played (hit, miss, kill, door_open,
+  mon_hit, mon_miss, gold, death seen), wav fetched once and decodes, off after
+  reload. Native tty build still compiles.
+- Open: stairs/levelup/spell/zap/eat sounds not reached in the browser test
+  (the tester died first; hooks compile in the same way); sounds only heard
+  headless (Mac listen owed).
 
 ### Stage 5 facts
 - Page: `web/index.html` + `web/evilhack.js` (from dynahack.js), shared
