@@ -5008,14 +5008,12 @@ int n;
     WEB_SOUND("energy_drain"); /* RVIP sound */
     if (!u.uenmax) {
         /* energy is completely gone */
-        WEB_SOUND("energy_drain"); /* RVIP sound */
         You_feel("momentarily lethargic.");
     } else {
         /* throttle further loss a bit when there's not much left to lose */
         if (n > u.uenmax || n > u.ulevel)
             n = rnd(n);
 
-        WEB_SOUND("energy_drain"); /* RVIP sound */
         You_feel("your magical energy drain away%c", (n > u.uen) ? '!' : '.');
         u.uen -= n;
         if (u.uen < 0) {

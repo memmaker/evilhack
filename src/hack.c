@@ -178,6 +178,7 @@ moverock()
                     pline("There's %s on the other side.", a_monnam(mtmp));
                     deliver_part1 = TRUE;
                 } else {
+                    WEB_SOUND("bison"); /* RVIP sound */
                     You_hear("a monster behind %s.", the(xname(otmp)));
                     if (!Deaf)
                         deliver_part1 = TRUE;
@@ -252,6 +253,7 @@ moverock()
                               otense(otmp, "plug"),
                               (ttmp->ttyp == TRAPDOOR) ? "trap door" : "hole",
                               surface(rx, ry));
+                    WEB_SOUND("fills"); /* RVIP sound */
                     deltrap(ttmp);
                     delobj(otmp);
                     pathfind_turn = 0; /* invalidate pathfinding cache */
@@ -320,11 +322,13 @@ moverock()
 #endif
  dopush:
                 if (!u.usteed) {
-                    if (moves > lastmovetime + 2 || moves < lastmovetime)
+                    if (moves > lastmovetime + 2 || moves < lastmovetime) {
+                        WEB_SOUND("boulder"); /* RVIP sound */
                         pline("With %s effort you move %s.",
                               racial_throws_rocks(&youmonst) ? "little"
                                                              : "great",
                               the(xname(otmp)));
+                    }
                     exercise(A_STR, TRUE);
                 } else
                     pline("%s moves %s.", upstart(y_monnam(u.usteed)),

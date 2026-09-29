@@ -244,6 +244,7 @@ const char *verb;
             }
         }
         if (*verb) {
+            WEB_SOUND("fills"); /* RVIP sound */
             if (Blind && (x == u.ux) && (y == u.uy)) {
                 You_hear("a CRASH! beneath you.");
             } else if (!Blind && cansee(x, y)) {

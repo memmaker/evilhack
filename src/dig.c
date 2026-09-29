@@ -281,6 +281,7 @@ dig(VOID_ARGS)
         }
         if (IS_ROCK(lev->typ) && !may_dig(dpx, dpy)
             && dig_typ(uwep, dpx, dpy) == DIGTYP_ROCK) {
+            WEB_SOUND("vault"); /* RVIP sound */
             pline("This %s is too hard to %s.",
                   is_db_wall(dpx, dpy) ? "drawbridge" : "wall", verb);
             return 0;
@@ -480,6 +481,7 @@ dig(VOID_ARGS)
                     lev->typ = ROOM, lev->flags = 0;
                 }
             } else {
+                WEB_SOUND("rocks"); /* RVIP sound */
                 digtxt = "You succeed in cutting away some rock.";
                 lev->typ = CORR, lev->flags = 0;
             }
@@ -495,6 +497,7 @@ dig(VOID_ARGS)
             } else {
                 lev->typ = DOOR, lev->doormask = D_NODOOR;
             }
+            WEB_SOUND("rockl"); /* RVIP sound */
             digtxt = "You make an opening in the wall.";
         } else if (lev->typ == SDOOR) {
             cvt_sdoor_to_door(lev); /* ->typ = DOOR */
@@ -1356,6 +1359,7 @@ struct obj *obj;
             context.digging.pos.y = u.uy;
             assign_level(&context.digging.level, &u.uz);
             context.digging.effort = 0;
+            WEB_SOUND("rockl"); /* RVIP sound */
             You("start %s downward.", verbing);
             if (*u.ushops) {
                 shopdig(0);
