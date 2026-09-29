@@ -67,9 +67,22 @@ mkdir -p "$SEED/fs"
 cp "$SEED/dat/nhdat" dat/license dat/symbols web/sysconf "$SEED/fs/"
 echo "$(ls "$SEED"/dat/*.lev | wc -l) levels compiled"
 
+# ---- tiles (RVIP stage 4): NetHack 3.6 set from win/share/*.txt ----
+# glyph2tile with statues as grey monster tiles (tilemap.c only turns that on
+# for MSDOS/WIN32/X11): native tilemap writes web/gen/src/tile.c, used by
+# the game instead of src/tile.c. util/tile2bmp (native, checks every tile
+# name against monst.c/objects.c) draws the sheet incl. the grey statues;
+# web/mktiles.py turns it into tiles.png (16x16 cells, no scaling).
+mkdir -p "$GEN/util" "$GEN/src"
+cc -O1 -w -I$GEN/include $DEFS -DSTATUES_LOOK_LIKE_MONSTERS= win/share/tilemap.c -o "$GEN/tilemap"
+(cd "$GEN/util" && ../tilemap)
+[ -x util/tile2bmp ] || make -C util tile2bmp >/dev/null
+(cd util && ./tile2bmp ../$GEN/nhtiles.bmp)
+python3 web/mktiles.py "$GEN/nhtiles.bmp" "$GEN/src/tile.c" "$GEN/tiles.png"
+
 # ---- the game ----
 CF="-O2 -fcommon $WARN -I$GEN/include $DEFS"
-SRCS="$(ls src/*.c) sys/share/ioctl.c sys/share/unixtty.c sys/share/posixregex.c \
+SRCS="$(ls src/*.c | grep -v '/tile.c$') $GEN/src/tile.c sys/share/ioctl.c sys/share/unixtty.c sys/share/posixregex.c \
 	sys/unix/unixmain.c sys/unix/unixunix.c sys/unix/unixres.c win/web/winweb.c"
 mkdir -p "$OBJ"
 export CF OBJ
@@ -84,7 +97,7 @@ emcc -O2 $WARN "$OBJ"/*.o --preload-file "$SEED/fs@/seed" -o "$OUT/evilhack-core
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAP32 \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
-cp web/index.html web/evilhack.js "$OUT/"
+cp web/index.html web/evilhack.js "$GEN/tiles.png" "$OUT/"
 # serve tree as on the server: dist + shared ../rvip-*.js (gitignored)
 rm -rf web/serve && mkdir -p web/serve
 ln -s ../dist web/serve/evilhack
