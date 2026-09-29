@@ -211,6 +211,7 @@ VA_DECL(const char *, line)
     if (u.ux)
         flush_screen(1); /* %% */
 
+    rvip_msgs++; /* RVIP: explore stops on a new message */
     putmesg(line);
 
 #if defined(MSGHANDLER) && (defined(POSIX_TYPES) || defined(__GNUC__))

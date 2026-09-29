@@ -536,6 +536,20 @@ web_askname(void)
     } while (!n);
 }
 
+/* RVIP: explore / stair walks paint every step and stop on any key (the
+   key is swallowed).  Called by rvip_continue() before each step. */
+boolean
+web_walk_pause(void)
+{
+    redraw();
+    emscripten_sleep(40);
+    if (js_key(1, 0) > 0) {
+        (void) js_key(0, 0);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void
 web_get_nh_event(void)
 {

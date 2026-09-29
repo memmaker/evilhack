@@ -1140,6 +1140,16 @@ dodown()
                            || (u.ux == sstairs.sx && u.uy == sstairs.sy
                                && !sstairs.up)),
             ladder_down = (u.ux == xdnladder && u.uy == ydnladder);
+    struct trap *rt;
+
+    /* RVIP: off the stairs, walk to the nearest known down stairs */
+    if (!stairs_down && !ladder_down && !u.ustuck
+        && !((rt = t_at(u.ux, u.uy)) != 0 && rt->tseen)) {
+        int r = rvip_start('>');
+
+        if (r >= 0)
+            return r;
+    }
 
     if (u_rooted())
         return 1;
@@ -1317,6 +1327,18 @@ dodown()
 int
 doup()
 {
+    /* RVIP: off the stairs, walk to the nearest known up stairs */
+    if (!((u.ux == xupstair && u.uy == yupstair)
+          || (u.ux == xupladder && u.uy == yupladder)
+          || (u.ux == sstairs.sx && u.uy == sstairs.sy && sstairs.up))
+        && !u.ustuck && !(u.utrap && u.utraptype == TT_PIT)
+        && !u.uinwater) {
+        int r = rvip_start('<');
+
+        if (r >= 0)
+            return r;
+    }
+
     if (u_rooted())
         return 1;
 

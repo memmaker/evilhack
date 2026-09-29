@@ -4552,6 +4552,8 @@ struct ext_func_tab extcmdlist[] = {
     { '\0', "timeout", "look at timeout queue and hero's timed intrinsics",
             wiz_timeout_queue, IFBURIED | AUTOCOMPLETE | WIZMODECMD },
     { M('T'), "tip", "empty a container", dotip, AUTOCOMPLETE },
+    { '~', "autoexplore", "explore the level until something happens",
+            doexplore },
     { '_', "travel", "travel to a specific location on the map", dotravel },
     { M('t'), "turn", "turn undead away", doturn, IFBURIED | AUTOCOMPLETE },
     { 'X', "twoweapon", "toggle two-weapon combat",
