@@ -7,7 +7,7 @@
  *   Inventory and Equipment (rows with the game's colour, tile and symbol),
  *   Visible (RvipWM.visible lines built in C from the glyphs on the map),
  *   pop-ups (menus, text windows) and the prompt line over the map.
- * Tiles: one set, 'NetHack 3.6' (tiles.png from win/share/*.txt, 16x16), or
+ * Tiles: 'NetHack 3.6' (tiles.png from win/share/*.txt, 16x16), 'Absurdly Evil' (tiles-ae.png, 32x32), or
  * None = text. Page settings (layout, fonts, tile set, sound) live in
  * <RvipApp.dir>/web-layout.json, the player name in <dir>/web-name, both in
  * IndexedDB (IDBFS) next to the game's own files. Saves: S saves and ends;
@@ -40,7 +40,7 @@
 	function esc(t) { return t.replace(/[&<>]/g, function (c) { return '&' + (c === '&' ? 'amp' : c === '<' ? 'lt' : 'gt') + ';'; }); }
 
 	/* ---------- tile sets: the button cycles these, then None (text) ---------- */
-	var SETS = [{ name: 'NetHack 3.6', src: 'tiles.png', size: 16 }];
+	var SETS = [{ name: 'NetHack 3.6', src: 'tiles.png', size: 16 }, { name: 'Absurdly Evil', src: 'tiles-ae.png', size: 32 }];
 	var set = null, sheet = null, perRow = 40, loadGen = 0;
 	function tilesOn() { return !!(set && sheet); }
 	/* choose a set by name ('None' or an unknown name = text); a late load after a switch is dropped */

@@ -196,7 +196,7 @@ BROWSER = '''<ul>
 <em>Equipment</em> (hidden at first). Drag a title bar to move it, drag the gaps to resize, hover a title bar for rename,
 <em>A&minus;</em>/<em>A+</em> (text size; on the Map: zoom) and close. <em>Windows &#9662;</em> switches between multi-window and
 one-window mode, shows hidden windows and resets the layout.</li>
-<li><em>Tiles</em> switches between the NetHack 3.6 tile set and text. <em>Font</em> picks the font of the text windows; the Map
+<li><em>Tiles</em> cycles the NetHack 3.6 tiles, the Absurdly Evil tiles (Lemrent, floor tile by John Shaw) and text. <em>Font</em> picks the font of the text windows; the Map
 title bar has its own in text mode.</li>
 <li><strong>Inventory</strong> (<kbd>i</kbd>): move the cursor with the arrow keys or <kbd>j</kbd>/<kbd>k</kbd> (number pad too),
 <kbd>Enter</kbd> opens the item's menu with every action that fits it (wear, wield, quaff, read, apply, drop&hellip;); a letter picks

@@ -99,7 +99,7 @@ emcc -O2 $WARN "$OBJ"/*.o --preload-file "$SEED/fs@/seed" -o "$OUT/evilhack-core
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAP32 \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
-cp web/index.html web/evilhack.js "$GEN/tiles.png" "$OUT/"
+cp web/index.html web/evilhack.js web/tiles-ae.png "$GEN/tiles.png" "$OUT/"
 python3 web/make-help.py > "$OUT/help.html"
 # sound effects (RVIP stage 6): synthesized, one wav per WEB_SOUND("name") in the game
 python3 web/mksounds.py "$OUT/sound"
