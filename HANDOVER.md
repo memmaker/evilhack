@@ -10,15 +10,45 @@ Web port of EvilHack 0.9.3 following RVIP (`/home/user/rvip/RVIP.md`, Mac:
 - **Stage 4 (Tiles): done.**
 - **Stage 5 (Web page and windows): done.**
 - **Stage 6 (Docs and sound): done.**
-- **Stage 7 (Publish): done as far as the cloud allows.** Next: stage 8
-  (shrine). **Left for the Mac** (steps in `web/publish/APPLY.md`): apply
+- **Stage 7 (Publish): done as far as the cloud allows.** **Left for the Mac** (steps in `web/publish/APPLY.md`): apply
   `web/publish/roguelikes-index.patch` + `card.png` → `img/evilhack.png` in
   roguelikes-index (card, tree `<li>`, years.json, 41→42), og.py for the index
   page, commit+push+deploy both repos, check live, pane check, repo split
   (unshallow first; filter CLOUD.md/LESSONS.md).
+- **Stage 8 (Shrine): done as far as the cloud allows.** Next: stage 9.
+  **Left for the Mac:** `cp -r web/publish/shrine/evilhack.html
+  web/publish/shrine/evilhack` into roguelikes-index `shrine/`, apply the
+  (regenerated) patch, `./order.py`, commit+push both repos, both `deploy.sh`,
+  check live: card Info, tree ✦, game title link (all → `shrine/evilhack.html`).
 - Live URL (after deploy): https://ruzzoli.de/roguelikes/evilhack/ — **ready to
   deploy** (`web/build.sh`, then `web/deploy.sh` from the Mac; not run: no ssh).
   **Mac pane check still owed** (stages 1-5 only seen headless).
+
+### Stage 8 facts
+- Page `web/publish/shrine/evilhack.html` (template rogue54.html, only
+  `shrine.css` classes, `href="shrine.css"` like the template since the page
+  lives in `shrine/`), folder `shrine/evilhack/`: `Guidebook.txt` (from
+  `git show HEAD:doc/Guidebook.txt`, 5,184 lines, 0.9.3 edition dated
+  2026-05-30), `license.txt` (NGPL, top-level LICENSE), `explore.png` and
+  `menu.png` (stage-5 Playwright screenshots of this build), `monsters.png`
+  (11 tiles from `web/dist/tiles.png` at 3×, indices via `glyph2tile`).
+- Stats from the code: NUMMONS 563 (web pm.h), NUM_OBJECTS 565, 69 artifacts
+  (`A(` in artilist.h), 16 roles, 14 races (role.c), 62 SPELL entries, 14
+  dungeons in dungeon.def, 36 `dat/*.des`; 295k lines in 208 src/include files.
+- Trivia sources fetched: GitHub repo page, releases page, k21971 profile,
+  dat/history, README, changelog. **Blocked:** nethackwiki.com, allthetropes.org
+  (egress proxy); fandom not tried. `gh` CLI absent in this cloud.
+- **No walkthrough** exists (random dungeon): Help section = rules of thumb +
+  NetHackWiki link (unverified from the cloud, URL from upstream README).
+- Tile art note: some EvilHack tiles are stand-ins (Tal'Gath = beholder art);
+  drow/Rat King tiles look odd at the right indices, left out of the strip.
+- Cheats: wizard mode refused in the browser (`authorize_wizard_mode` →
+  `get_unix_pw` NULL); `#exploremode` works (web sysconf `EXPLORERS=*`,
+  `check_user_string` returns early on `*`); Export/Import save-scumming.
+- Game page `#bar h1` already links `../shrine/evilhack.html` (stage 5) with the
+  `#bar h1 a` rule. Patch regenerated, applies to a fresh roguelikes copy,
+  `order.py` and `order.py --fix` silent. 375 px: scrollWidth 375 = innerWidth;
+  desktop and phone screenshots checked.
 
 ### Stage 7 facts
 - Version line: **Based on EvilHack 0.9.3 · memmaker/evilhack @ c444f6a**
